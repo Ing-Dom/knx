@@ -2,13 +2,13 @@
 
 #include "Arduino.h"
 
-#ifdef ARDUINO_ARCH_SAMD
+#ifdef ARDUINO_ARCH_RP2040
 
-class SamdPlatform : public ArduinoPlatform
+class RP2040ArduinoPlatform : public ArduinoPlatform
 {
 public:
-    SamdPlatform();
-    SamdPlatform( HardwareSerial* s);
+    RP2040ArduinoPlatform();
+    RP2040ArduinoPlatform( HardwareSerial* s);
 
     // unique serial number
     uint32_t uniqueSerialNumber() override;

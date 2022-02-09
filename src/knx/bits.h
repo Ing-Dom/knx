@@ -5,7 +5,7 @@
 
 #if defined(__linux__)
 #include <arpa/inet.h>
-#elif defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_STM32) || defined (DeviceFamily_CC13X0)
+#elif defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_STM32) || defined (DeviceFamily_CC13X0)
 #define getbyte(x,n) (*(((uint8_t*)&(x))+n))
 #define htons(x)  ( (getbyte(x,0)<<8) | getbyte(x,1) ) 
 #define htonl(x) ( (getbyte(x,0)<<24) | (getbyte(x,1)<<16) | (getbyte(x,2)<<8) | getbyte(x,3) )
@@ -25,7 +25,7 @@
 #define ABS(x)    ((x > 0) ? (x) : (-x))
 #endif
 
-#if defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_STM32)
+#if defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_STM32)
 #include <Arduino.h>
 #elif defined(ARDUINO_ARCH_ESP8266)
 #include <Arduino.h>
@@ -63,6 +63,7 @@ typedef void (*voidFuncPtr)(void);
 void attachInterrupt(uint32_t pin, voidFuncPtr callback, uint32_t mode);
 #endif
 
+#ifndef KNX_NO_PRINT
 void print(const char[]);
 void print(char);
 void print(unsigned char, int = DEC);
@@ -87,6 +88,11 @@ void println(double);
 void println(void);
 
 void printHex(const char* suffix, const uint8_t *data, size_t length, bool newline = true);
+#else
+#define print(...)      do {} while(0)
+#define println(...)    do {} while(0)
+#define printHex(...)   do {} while(0)
+#endif
 
 const uint8_t* popByte(uint8_t& b, const uint8_t* data);
 const uint8_t* popWord(uint16_t& w, const uint8_t* data);
