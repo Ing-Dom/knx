@@ -89,6 +89,7 @@ public:
   private:
 
     EthernetUDP _udp;
+    EthernetUDP _udp_uni;
     IPAddress mcastaddr;
     uint16_t _port;
 #endif

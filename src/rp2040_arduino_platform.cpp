@@ -174,14 +174,16 @@ bool RP2040ArduinoPlatform::sendBytesUniCast(uint32_t addr, uint16_t port, uint8
     print("sendBytesUniCast to:");
     println(ucastaddr.toString().c_str());
 
-    if (_udp.beginPacket(ucastaddr, port) == 1)
+    _udp_uni.begin(3671);
+    if (_udp_uni.beginPacket(ucastaddr, port) == 1)
     {
-        _udp.write(buffer, len);
-        if (_udp.endPacket() == 0)
+        _udp_uni.write(buffer, len);
+        if (_udp_uni.endPacket() == 0)
             println("sendBytesUniCast endPacket fail");
     }
     else
         println("sendBytesUniCast beginPacket fail");
+    _udp_uni.stop();
     return true;
 }
 #endif
