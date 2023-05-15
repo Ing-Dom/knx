@@ -2,10 +2,10 @@
 
 #include "Arduino.h"
 #define DEBUG_ETHERNET_GENERIC_PORT         Serial
-#define _ETG_LOGLEVEL_                      2
-#define USING_SPI2                          true
+#define _ETG_LOGLEVEL_                      3
+#define USING_SPI2                          false
 #define ETHERNET_USE_RPIPICO      true
-#define USE_THIS_SS_PIN       PIN_SPI1_SS  
+#define USE_THIS_SS_PIN       PIN_SPI0_SS  
 #define SS_PIN_DEFAULT        USE_THIS_SS_PIN
 #define ETHERNET_LARGE_BUFFERS
 #include <Ethernet_Generic.hpp>
