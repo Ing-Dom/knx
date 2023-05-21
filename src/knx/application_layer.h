@@ -114,6 +114,8 @@ class ApplicationLayer
                                           uint16_t objectType, uint8_t objectInstance, uint8_t propertyId, uint8_t numberOfElements, uint16_t startIndex, uint8_t returnCode);
     void propertyValueWriteRequest(AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl& secCtrl, uint8_t objectIndex,
                                    uint8_t propertyId, uint8_t numberOfElements, uint16_t startIndex, uint8_t* data, uint8_t length);
+    void adcReadResponse(AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl& secCtrl,
+                                                     uint8_t channelNr, uint8_t readCount, int16_t value);
     void functionPropertyStateResponse(AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl &secCtrl,
                                        uint8_t objectIndex, uint8_t propertyId, uint8_t *resultData, uint8_t resultLength);
     void functionPropertyExtStateResponse(AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl& secCtrl,
@@ -212,9 +214,9 @@ class ApplicationLayer
     void individualConfirm(AckType ack, HopCountType hopType, Priority priority, uint16_t tsap, APDU& apdu, const SecurityControl& secCtrl, bool status);
     void individualSend(AckType ack, HopCountType hopType, Priority priority, uint16_t asap, APDU& apdu, const SecurityControl& secCtrl);
 
-    uint16_t _savedAsapReadRequest;
-    uint16_t _savedAsapWriteRequest;
-    uint16_t _savedAsapResponse;
+    uint16_t _savedAsapReadRequest = 0;
+    uint16_t _savedAsapWriteRequest = 0;
+    uint16_t _savedAsapResponse = 0;
     AssociationTableObject* _assocTable = nullptr;
     BusAccessUnit& _bau;
 

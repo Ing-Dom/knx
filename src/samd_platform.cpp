@@ -61,7 +61,7 @@ void SamdPlatform::restart()
 
 #ifdef USE_SAMD_EEPROM_EMULATION
 #pragma warning "Using EEPROM Simulation"
-uint8_t* SamdPlatform::getEepromBuffer(uint16_t size)
+uint8_t* SamdPlatform::getEepromBuffer(uint32_t size)
 {
     //EEPROM.begin(size);
     if(size > EEPROM_EMULATION_SIZE)
@@ -91,8 +91,13 @@ void SamdPlatform::init()
 
     // find end of program flash and set limit to next row
     uint32_t endEddr = (uint32_t)(&__etext + (&__data_end__ - &__data_start__)); // text + data MemoryBlock
+#ifdef KNX_FLASH_OFFSET
+    _MemoryStart = KNX_FLASH_OFFSET;
+    _MemoryEnd = KNX_FLASH_OFFSET + KNX_FLASH_SIZE;
+#else
     _MemoryStart = getRowAddr(_pageSize * _pageCnt - KNX_FLASH_SIZE - 1);        // 23295
     _MemoryEnd = getRowAddr(_pageSize * _pageCnt - 1);
+#endif
     // chosen flash size is not available anymore
     if (_MemoryStart < endEddr) {
         println("KNX_FLASH_SIZE is not available (possible too much flash use by firmware)");

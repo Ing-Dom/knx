@@ -4,6 +4,7 @@
 #include "interface_object.h"
 
 typedef void (*BeforeRestartCallback)(void);
+typedef bool (*FunctionPropertyCallback)(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
 
 class BusAccessUnit
 {
@@ -174,4 +175,8 @@ class BusAccessUnit
                                     uint8_t* data, uint32_t length);
     virtual void beforeRestartCallback(BeforeRestartCallback func);
     virtual BeforeRestartCallback beforeRestartCallback();
+    virtual void functionPropertyCallback(FunctionPropertyCallback func);
+    virtual FunctionPropertyCallback functionPropertyCallback();
+    virtual void functionPropertyStateCallback(FunctionPropertyCallback func);
+    virtual FunctionPropertyCallback functionPropertyStateCallback();
 };
