@@ -10,10 +10,7 @@
 #define DEBUG_ETHERNET_GENERIC_PORT         Serial
 #define _ETG_LOGLEVEL_                      3
 #define USING_SPI2                          true
-//#define USING_CUSTOM_SPI                    true
 #define ETHERNET_USE_RPIPICO      true
-//#define USE_THIS_SS_PIN       PIN_SS_  
-//#define SS_PIN_DEFAULT        USE_THIS_SS_PIN
 #define ETHERNET_LARGE_BUFFERS
 #include <Ethernet_Generic.hpp>
 #include <EthernetClient.h>             // https://github.com/khoih-prog/Ethernet_Generic
