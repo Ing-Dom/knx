@@ -14,24 +14,19 @@ credits to https://github.com/ecarjat
 #ifdef ARDUINO_ARCH_RP2040
 #include "knx/bits.h"
 
-/*
-RP2040ArduinoPlatform::RP2040ArduinoPlatform()
+
+RP2040EthArduinoPlatform::RP2040EthArduinoPlatform()
 #ifndef KNX_NO_DEFAULT_UART
-    : ArduinoPlatform(&KNX_SERIAL)
+    : RP2040ArduinoPlatform(&KNX_SERIAL)
 #endif
 {
-    #ifndef USE_RP2040_EEPROM_EMULATION
-    _memoryType = Flash;
-    #endif
+
 }
 
-RP2040ArduinoPlatform::RP2040ArduinoPlatform( HardwareSerial* s) : ArduinoPlatform(s)
+RP2040EthArduinoPlatform::RP2040EthArduinoPlatform( HardwareSerial* s) : RP2040ArduinoPlatform(s)
 {
-    #ifndef USE_RP2040_EEPROM_EMULATION
-    _memoryType = Flash;
-    #endif
+
 }
-*/
 
 uint32_t RP2040EthArduinoPlatform::currentIpAddress()
 {

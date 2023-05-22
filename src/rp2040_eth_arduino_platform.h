@@ -21,10 +21,10 @@
 class RP2040EthArduinoPlatform : public RP2040ArduinoPlatform
 {
 public:
-/*
+
     RP2040EthArduinoPlatform();
     RP2040EthArduinoPlatform( HardwareSerial* s);
-*/
+
 
     uint32_t currentIpAddress() override;
     uint32_t currentSubnetMask() override;
