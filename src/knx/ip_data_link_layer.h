@@ -18,12 +18,16 @@ class IpDataLinkLayer : public DataLinkLayer
     void loop();
     void enabled(bool value);
     bool enabled() const;
-    virtual DptMedium mediumType() const override;
+    DptMedium mediumType() const override;
 
   private:
     bool _enabled = false;
+    uint8_t _frameCount[10] = {0,0,0,0,0,0,0,0,0,0};
+    uint8_t _frameCountBase = 0;
+    uint32_t _frameCountTimeBase = 0;
     bool sendFrame(CemiFrame& frame);
     bool sendBytes(uint8_t* buffer, uint16_t length);
+    bool isSendLimitReached();
 
     IpParameterObject& _ipParameters;
 };
