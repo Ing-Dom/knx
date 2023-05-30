@@ -9,9 +9,18 @@
 #ifdef ARDUINO_ARCH_RP2040
 
 #include <SPI.h>
+
+#ifndef DEBUG_ETHERNET_GENERIC_PORT
 #define DEBUG_ETHERNET_GENERIC_PORT         Serial
-#define _ETG_LOGLEVEL_                      3
-#define USING_SPI2                          false
+#endif
+
+#ifndef _ETG_LOGLEVEL_
+#define _ETG_LOGLEVEL_                      1
+#endif
+
+// set to true if you want to use SPI1, otherwise SPI is used.
+//#define ETHERNET_GENERIC_USING_SPI2                          false
+
 #define ETHERNET_USE_RPIPICO      true
 #define ETHERNET_LARGE_BUFFERS
 #include <Ethernet_Generic.hpp>

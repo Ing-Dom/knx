@@ -52,9 +52,13 @@ void RP2040EthArduinoPlatform::setupMultiCast(uint32_t addr, uint16_t port)
     mcastaddr = IPAddress(htonl(addr));
     _port = port;
     uint8_t result = _udp.beginMulticast(mcastaddr, port);
-    KNX_DEBUG_SERIAL.printf("Setup Mcast addr: ");
-    mcastaddr.printTo(KNX_DEBUG_SERIAL);
-    KNX_DEBUG_SERIAL.printf(" on port: %d result %d\n", port, result);
+
+    print("Setup Mcast addr: ");
+    print(mcastaddr.toString().c_str());
+    print(" on port: ");
+    print(port);
+    print(" result ");
+    println(result);
 }
 
 void RP2040EthArduinoPlatform::closeMultiCast()
@@ -78,14 +82,17 @@ int RP2040EthArduinoPlatform::readBytesMultiCast(uint8_t* buffer, uint16_t maxLe
 
     if (len > maxLen)
     {
-        KNX_DEBUG_SERIAL.printf("udp buffer to small. was %d, needed %d\n", maxLen, len);
+        print("udp buffer to small. was ");
+        print(maxLen);
+        print(", needed ");
+        println(len);
         fatalError();
     }
 
     _udp.read(buffer, len);
     
-    KNX_DEBUG_SERIAL.printf("Remote IP: ");
-    _udp.remoteIP().printTo(KNX_DEBUG_SERIAL);
+    print("Remote IP: ");
+    print(_udp.remoteIP().toString().c_str());
 
     printHex("-> ", buffer, len);
     return len;
