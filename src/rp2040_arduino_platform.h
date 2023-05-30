@@ -1,3 +1,5 @@
+#pragma once
+
 #include "arduino_platform.h"
 
 #include "Arduino.h"

@@ -8,24 +8,16 @@
 
 #ifdef ARDUINO_ARCH_RP2040
 
-#include <SPI.h>
-#define DEBUG_ETHERNET_GENERIC_PORT         Serial
-#define _ETG_LOGLEVEL_                      3
-#define USING_SPI2                          false
-#define ETHERNET_USE_RPIPICO      true
-#define ETHERNET_LARGE_BUFFERS
-#include <Ethernet_Generic.hpp>
-#include <EthernetClient.h>             // https://github.com/khoih-prog/Ethernet_Generic
-#include <EthernetServer.h>             // https://github.com/khoih-prog/Ethernet_Generic
-#include <EthernetUdp.h>
+#include <WiFi.h>
+#include <WiFiUdp.h>
 
 
-class RP2040EthArduinoPlatform : public RP2040ArduinoPlatform
+class RP2040WifiArduinoPlatform : public RP2040ArduinoPlatform
 {
 public:
 
-    RP2040EthArduinoPlatform();
-    RP2040EthArduinoPlatform( HardwareSerial* s);
+    RP2040WifiArduinoPlatform();
+    RP2040WifiArduinoPlatform( HardwareSerial* s);
 
 
     uint32_t currentIpAddress() override;
@@ -44,8 +36,8 @@ public:
 
   protected:
 
-    EthernetUDP _udp;
-    EthernetUDP _udp_uni;
+    WiFiUDP _udp;
+    WiFiUDP _udp_uni;
     IPAddress mcastaddr;
     uint16_t _port;
 
