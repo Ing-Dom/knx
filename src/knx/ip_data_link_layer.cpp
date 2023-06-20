@@ -71,8 +71,11 @@ void IpDataLinkLayer::loop()
             break;
         }
         default:
+#ifdef KNX_LOG_IP
             print("Unhandled service identifier: ");
             println(code, HEX);
+#endif
+        ;
     }
 }
 
