@@ -438,8 +438,10 @@ void NetworkLayerCoupler::dataBroadcastRequest(AckType ack, HopCountType hopType
     else
         npdu.hopCount(hopCount());
 
+    CemiFrame tmpFrame(tpdu.frame());
+
     _netLayerEntities[kPrimaryIfIndex].sendDataRequest(npdu, ack, 0, _deviceObj.individualAddress(), priority, GroupAddress, Broadcast);
-    _netLayerEntities[kSecondaryIfIndex].sendDataRequest(npdu, ack, 0, _deviceObj.individualAddress(), priority, GroupAddress, Broadcast);
+    _netLayerEntities[kSecondaryIfIndex].sendDataRequest(tmpFrame.npdu(), ack, 0, _deviceObj.individualAddress(), priority, GroupAddress, Broadcast);
 }
 
 void NetworkLayerCoupler::dataSystemBroadcastRequest(AckType ack, HopCountType hopType, Priority priority, TPDU& tpdu)
@@ -451,6 +453,16 @@ void NetworkLayerCoupler::dataSystemBroadcastRequest(AckType ack, HopCountType h
     else
         npdu.hopCount(hopCount());
 
-    _netLayerEntities[kPrimaryIfIndex].sendDataRequest(npdu, ack, 0, _deviceObj.individualAddress(), priority, GroupAddress, SysBroadcast);
-    _netLayerEntities[kSecondaryIfIndex].sendDataRequest(npdu, ack, 0, _deviceObj.individualAddress(), priority, GroupAddress, SysBroadcast);
+
+    CemiFrame tmpFrame(tpdu.frame());
+
+    // for closed media like TP1 and IP
+    bool isClosedMedium = (_netLayerEntities[kPrimaryIfIndex].mediumType() == DptMedium::KNX_TP1) || (_netLayerEntities[kPrimaryIfIndex].mediumType() == DptMedium::KNX_IP);
+    SystemBroadcast broadcastType = (isClosedMedium && isApciSystemBroadcast(tpdu.apdu()) ? Broadcast : SysBroadcast);
+    _netLayerEntities[kPrimaryIfIndex].sendDataRequest(npdu, ack, 0, _deviceObj.individualAddress(), priority, GroupAddress, broadcastType);
+
+    isClosedMedium = (_netLayerEntities[kSecondaryIfIndex].mediumType() == DptMedium::KNX_TP1) || (_netLayerEntities[kSecondaryIfIndex].mediumType() == DptMedium::KNX_IP);
+    broadcastType = (isClosedMedium && isApciSystemBroadcast(tmpFrame.apdu()) ? Broadcast : SysBroadcast);
+    println(broadcastType);
+    _netLayerEntities[kSecondaryIfIndex].sendDataRequest(tmpFrame.npdu(), ack, 0, _deviceObj.individualAddress(), priority, GroupAddress, broadcastType);
 }
