@@ -142,6 +142,7 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
 
     // Use other interface
     uint8_t interfaceIndex = (sourceInterfaceIndex == kSecondaryIfIndex) ? kPrimaryIfIndex : kSecondaryIfIndex;
+#ifdef LOG_COUPLER
     if (sourceInterfaceIndex == 0)
         print("Routing from P->S: ");
     else
@@ -149,6 +150,7 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
     print(source, HEX); print(" -> "); print(destination, HEX);
     print(" - ");
     npdu.frame().apdu().printPDU();
+#endif
     _netLayerEntities[interfaceIndex].sendDataRequest(npdu, ack, destination, source, priority, addrType, broadcastType);
 }
 

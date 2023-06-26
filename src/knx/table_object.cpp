@@ -64,7 +64,7 @@ uint8_t* TableObject::save(uint8_t* buffer)
     else
         buffer = pushInt(0, buffer);
 
-    return buffer;
+    return InterfaceObject::save(buffer);
 }
 
 
@@ -84,7 +84,7 @@ const uint8_t* TableObject::restore(const uint8_t* buffer)
     else
         _data = 0;
 
-    return buffer;
+    return InterfaceObject::restore(buffer);
 }
 
 uint32_t TableObject::tableReference()
@@ -94,6 +94,9 @@ uint32_t TableObject::tableReference()
 
 bool TableObject::allocTable(uint32_t size, bool doFill, uint8_t fillByte)
 {
+    print("TableObject::allocTable ");
+    println(size);
+
     if (_data)
     {
         _memory.freeMemory(_data);

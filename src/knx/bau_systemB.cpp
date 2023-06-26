@@ -153,9 +153,18 @@ void BauSystemB::memoryRoutingTableWriteIndication(Priority priority, HopCountTy
     print(number);
     print(" data: ");
     printHex("=>", data, number);
-    _memory.writeMemory(memoryAddress, number, data);
-    if (_deviceObj.verifyMode())
-        memoryRoutingTableReadIndication(priority, hopType, asap, secCtrl, number, memoryAddress, data);
+
+    //if(memoryAddress >= 0x200 && memoryAddress < 0x2200)
+    //{
+    //    // special mode for 091A
+//
+ //   }
+   // else
+    {
+        _memory.writeMemory(memoryAddress, number, data);
+        if (_deviceObj.verifyMode())
+            memoryRoutingTableReadIndication(priority, hopType, asap, secCtrl, number, memoryAddress, data);
+    }
 }
 
 //
@@ -292,6 +301,16 @@ void BauSystemB::propertyValueReadIndication(Priority priority, HopCountType hop
 {
     uint8_t size = 0;
     uint8_t elementCount = numberOfElements;
+
+    print("propertyValueReadIndication: ObjIdx ");
+    print(objectIndex);
+    print(" propId ");
+    print(propertyId);
+    print(" num ");
+    print(numberOfElements);
+    print(" start ");
+    print(startIndex);
+
     InterfaceObject* obj = getInterfaceObject(objectIndex);
     if (obj)
     {
@@ -300,6 +319,8 @@ void BauSystemB::propertyValueReadIndication(Priority priority, HopCountType hop
             size = elementSize * numberOfElements;
         else
             size = sizeof(uint16_t); // size of property array entry 0 which contains the current number of elements
+        print(" size ");
+        print(size);
     }
     else
         elementCount = 0;
@@ -308,8 +329,16 @@ void BauSystemB::propertyValueReadIndication(Priority priority, HopCountType hop
     if(obj)
         obj->readProperty((PropertyID)propertyId, startIndex, elementCount, data);
     
+    print(" data ");
+    print(data[0]);
+    
     if (elementCount == 0)
         size = 0;
+    
+    print(" elementCount ");
+    print(elementCount);
+    print(" size ");
+    println(size);
     
     applicationLayer().propertyValueReadResponse(AckRequested, priority, hopType, asap, secCtrl, objectIndex, propertyId, elementCount,
                                         startIndex, data, size);

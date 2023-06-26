@@ -173,6 +173,11 @@ void Platform::commitNonVolatileMemory()
 
 uint32_t Platform::writeNonVolatileMemory(uint32_t relativeAddress, uint8_t* buffer, size_t size)
 {
+    print("Platform::writeNonVolatileMemory relativeAddress ");
+    print(relativeAddress);
+    print(" size ");
+    println(size);
+
     if(_memoryType == Flash)
     {
         while (size > 0)

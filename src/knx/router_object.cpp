@@ -162,6 +162,8 @@ void RouterObject::initialize(CouplerModel model, uint8_t objIndex, DptMedium me
         TableObject::initializeProperties(sizeof(allProperties), allProperties);
     else
         InterfaceObject::initializeProperties(sizeof(allProperties), allProperties);
+    
+    
 }
 
 const uint8_t* RouterObject::restore(const uint8_t* buffer)
