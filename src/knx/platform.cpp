@@ -173,10 +173,12 @@ void Platform::commitNonVolatileMemory()
 
 uint32_t Platform::writeNonVolatileMemory(uint32_t relativeAddress, uint8_t* buffer, size_t size)
 {
+#ifdef LOG_KNX_MEM
     print("Platform::writeNonVolatileMemory relativeAddress ");
     print(relativeAddress);
     print(" size ");
     println(size);
+#endif
 
     if(_memoryType == Flash)
     {

@@ -3,9 +3,6 @@
 #include "interface_object.h"
 #include "data_property.h"
 
-#include "bits.h"
-#include <stdio.h>
-
 InterfaceObject::~InterfaceObject()
 {
     if (_properties != nullptr)
@@ -65,16 +62,13 @@ void InterfaceObject::masterReset(EraseCode eraseCode, uint8_t channel)
 
 void InterfaceObject::readProperty(PropertyID id, uint16_t start, uint8_t& count, uint8_t* data)
 {
-    //print("InterfaceObject::readProperty ");
     Property* prop = property(id);
-    
     if (prop == nullptr)
     {
-        println("readProperty null");
         count = 0;
         return;
     }
-    //println("readProperty");
+
     count = prop->read(start, count, data);
 }
 

@@ -94,9 +94,6 @@ uint32_t TableObject::tableReference()
 
 bool TableObject::allocTable(uint32_t size, bool doFill, uint8_t fillByte)
 {
-    print("TableObject::allocTable ");
-    println(size);
-
     if (_data)
     {
         _memory.freeMemory(_data);

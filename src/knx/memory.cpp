@@ -151,8 +151,6 @@ void Memory::writeMemory()
     {
         bufferPos = _saveRestores[i]->save(buffer);
         flashPos = _platform.writeNonVolatileMemory(flashPos, buffer, bufferPos - buffer);
-        print("saveRestores size ");
-        println(bufferPos - buffer);
     }
 
     print("save tableobjs ");
@@ -160,10 +158,6 @@ void Memory::writeMemory()
     for (int i = 0; i < _tableObjCount; i++)
     {
         bufferPos = _tableObjects[i]->save(buffer);
-        print("tableobj size ");
-        print(bufferPos - buffer);
-        print(" savesize ");
-        println(_tableObjects[i]->saveSize());
 
         //save to size of the memoryblock for tableobject too, so that we can rebuild the usedList and freeList
         if (_tableObjects[i]->_data != nullptr)
@@ -181,7 +175,7 @@ void Memory::writeMemory()
 
         flashPos = _platform.writeNonVolatileMemory(flashPos, buffer, bufferPos - buffer);
     }
-    delay(100);
+    
     _platform.commitNonVolatileMemory();
 }
 
@@ -282,19 +276,7 @@ void Memory::freeMemory(uint8_t* ptr)
 
 void Memory::writeMemory(uint32_t relativeAddress, size_t size, uint8_t* data)
 {
-#if MASK_VERSION == 0x091A
-    if(relativeAddress >= 0x200 && relativeAddress < 0x2200)
-    {
-        _platform.writeNonVolatileMemory(relativeAddress, data, size);
-    }
-    else
-    {
-        _platform.writeNonVolatileMemory(relativeAddress, data, size);
-    }
-    
-#else
     _platform.writeNonVolatileMemory(relativeAddress, data, size);
-#endif
 }
 
 
