@@ -84,7 +84,6 @@ void RouterObject::initialize(CouplerModel model, uint8_t objIndex, DptMedium me
     Property* tableProperties[] =
     {
         new DataProperty( PID_COUPLER_SERVICES_CONTROL, true, PDT_GENERIC_01, 1, ReadLv3 | WriteLv0, (uint8_t) 0), // written by ETS TODO: implement
-        new DataProperty( PID_FILTER_TABLE_USE, true, PDT_BINARY_INFORMATION, 1, ReadLv3 | WriteLv0, (uint16_t) 0 ), // default: invalid filter table, do not use, written by ETS
         new FunctionProperty<RouterObject>(this, PID_ROUTETABLE_CONTROL,
                 // Command Callback of PID_ROUTETABLE_CONTROL
                 [](RouterObject* obj, uint8_t* data, uint8_t length, uint8_t* resultData, uint8_t& resultLength) -> void {
@@ -95,12 +94,20 @@ void RouterObject::initialize(CouplerModel model, uint8_t objIndex, DptMedium me
                     obj->functionRouteTableControl(false, data, length, resultData, resultLength);
                 })
     };
+
+    Property* tableProperties20[] =
+    {
+        new DataProperty( PID_FILTER_TABLE_USE, true, PDT_BINARY_INFORMATION, 1, ReadLv3 | WriteLv0, (uint16_t) 0 ) // default: invalid filter table, do not use, written by ETS
+    };
+
     uint8_t tablePropertiesCount = sizeof(tableProperties) / sizeof(Property*);
+    uint8_t tableProperties20Count = sizeof(tableProperties20) / sizeof(Property*);
 
     size_t allPropertiesCount = fixedPropertiesCount;
     allPropertiesCount += (model == CouplerModel::Model_1x) ? model1xPropertiesCount : model20PropertiesCount;
     allPropertiesCount += useHopCount ? 1 : 0;
     allPropertiesCount += useTable ? tablePropertiesCount : 0;
+    allPropertiesCount += useTable && (model == CouplerModel::Model_20)  ? tableProperties20Count : 0;
     allPropertiesCount += ((mediumType == DptMedium::KNX_RF) || (mediumType == DptMedium::KNX_IP)) ? 1 : 0; // PID_RF_ENABLE_SBC and PID_IP_ENABLE_SBC
 
     Property* allProperties[allPropertiesCount];
@@ -131,6 +138,11 @@ void RouterObject::initialize(CouplerModel model, uint8_t objIndex, DptMedium me
     {
         memcpy(&allProperties[i], tableProperties, sizeof(tableProperties));
         i += tablePropertiesCount;
+        if((model == CouplerModel::Model_20))
+        {
+            memcpy(&allProperties[i], tableProperties20, sizeof(tableProperties20));
+            i += tableProperties20Count;
+        }
     }
 
     if (mediumType == DptMedium::KNX_RF)
@@ -158,12 +170,10 @@ void RouterObject::initialize(CouplerModel model, uint8_t objIndex, DptMedium me
                                     });
     }
 
-    if (useTable)
+    if (useTable && CouplerModel::Model_20)
         TableObject::initializeProperties(sizeof(allProperties), allProperties);
     else
         InterfaceObject::initializeProperties(sizeof(allProperties), allProperties);
-    
-    
 }
 
 const uint8_t* RouterObject::restore(const uint8_t* buffer)
