@@ -7,6 +7,7 @@
 #include "data_property.h"
 #include "callback_property.h"
 #include "function_property.h"
+#include "log_knx.h"
 
 // Filter Table Realization Type 3
 // The Filter Table Realisation Type 3 shall be organised as a memory mapped bit-field of
@@ -45,6 +46,7 @@ void RouterObject::initialize(CouplerModel model, uint8_t objIndex, DptMedium me
 {
     bool useHopCount = false;
     bool useTable = true;
+    _model = model;
 
     if (model == CouplerModel::Model_20)
     {
@@ -170,7 +172,7 @@ void RouterObject::initialize(CouplerModel model, uint8_t objIndex, DptMedium me
                                     });
     }
 
-    if (useTable && CouplerModel::Model_20)
+    if (useTable)
         TableObject::initializeProperties(sizeof(allProperties), allProperties);
     else
         InterfaceObject::initializeProperties(sizeof(allProperties), allProperties);
@@ -180,13 +182,15 @@ const uint8_t* RouterObject::restore(const uint8_t* buffer)
 {
     buffer = TableObject::restore(buffer);
 
-    _filterTableGroupAddresses = (uint16_t*)data();
+    _filterTableGroupAddresses = (uint16_t*)data(); // ToDo
 
     return buffer;
 }
 
 void RouterObject::commandClearSetRoutingTable(bool bitIsSet)
 {
+    print("RouterObject::commandClearSetRoutingTable ");
+    println(bitIsSet);
     for (uint16_t i = 0; i < kFilterTableSize; i++)
     {
         data()[i] = bitIsSet ? 0xFF : 0x00;
@@ -195,6 +199,8 @@ void RouterObject::commandClearSetRoutingTable(bool bitIsSet)
 
 bool RouterObject::statusClearSetRoutingTable(bool bitIsSet)
 {
+    print("RouterObject::statusClearSetRoutingTable ");
+    println(bitIsSet);
     for (uint16_t i = 0; i < kFilterTableSize; i++)
     {
         if (data()[i] != (bitIsSet ? 0xFF : 0x00))
@@ -205,6 +211,13 @@ bool RouterObject::statusClearSetRoutingTable(bool bitIsSet)
 
 void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t endAddress, bool bitIsSet)
 {
+    print("RouterObject::commandClearSetGroupAddress ");
+    print(startAddress);
+    print(" ");
+    print(endAddress);
+    print(" ");
+    println(bitIsSet);
+
     uint16_t startOctet = startAddress / 8;
     uint8_t startBitPosition = startAddress % 8;
     uint16_t endOctet = endAddress / 8;
@@ -256,6 +269,13 @@ void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t e
 
 bool RouterObject::statusClearSetGroupAddress(uint16_t startAddress, uint16_t endAddress, bool bitIsSet)
 {
+    print("RouterObject::statusClearSetGroupAddress ");
+    print(startAddress);
+    print(" ");
+    print(endAddress);
+    print(" ");
+    println(bitIsSet);
+
     uint16_t startOctet = startAddress / 8;
     uint8_t startBitPosition = startAddress % 8;
     uint16_t endOctet = endAddress / 8;
@@ -325,6 +345,11 @@ bool RouterObject::statusClearSetGroupAddress(uint16_t startAddress, uint16_t en
 
 void RouterObject::functionRouteTableControl(bool isCommand, uint8_t* data, uint8_t length, uint8_t* resultData, uint8_t& resultLength)
 {
+    print("RouterObject::functionRouteTableControl ");
+    print(isCommand);
+    print(" ");
+    printHex("", data, length);
+
     RouteTableServices srvId = (RouteTableServices) data[1];
 
     if (isCommand)
@@ -436,12 +461,18 @@ void RouterObject::functionRfEnableSbc(bool isCommand, uint8_t* data, uint8_t le
 
 bool RouterObject::isRfSbcRoutingEnabled()
 {
+    print("RouterObject::isRfSbcRoutingEnabled ");
+    println(_rfSbcRoutingEnabled);
     return _rfSbcRoutingEnabled;
 }
 
 // TODO: check if IP SBC works the same way, just copied from RF
 void RouterObject::functionIpEnableSbc(bool isCommand, uint8_t* data, uint8_t length, uint8_t* resultData, uint8_t& resultLength)
 {
+    print("RouterObject::functionIpEnableSbc ");
+    print(isCommand);
+    printHex(" ", data, length);
+
     if (isCommand)
     {
         _ipSbcRoutingEnabled = (data[0] == 1) ? true : false;
@@ -455,19 +486,27 @@ void RouterObject::functionIpEnableSbc(bool isCommand, uint8_t* data, uint8_t le
 // TODO: check if IP SBC works the same way, just copied from RF
 bool RouterObject::isIpSbcRoutingEnabled()
 {
+    print("RouterObject::isIpSbcRoutingEnabled ");
+    println(_ipSbcRoutingEnabled);
     return _ipSbcRoutingEnabled;
 }
 
 void RouterObject::beforeStateChange(LoadState& newState)
 {
+    println("RouterObject::beforeStateChange");
     if (newState != LS_LOADED)
         return;
 
-    _filterTableGroupAddresses = (uint16_t*)data();
+    _filterTableGroupAddresses = (uint16_t*)data(); // ToDo
 }
 
 void RouterObject::masterReset(EraseCode eraseCode, uint8_t channel)
 {
+    print("RouterObject::masterReset ");
+    print(eraseCode);
+    print(" ");
+    println(channel);
+
     if (eraseCode == FactoryReset)
     {
         // TODO: handle different erase codes
@@ -477,21 +516,34 @@ void RouterObject::masterReset(EraseCode eraseCode, uint8_t channel)
 
 bool RouterObject::isGroupAddressInFilterTable(uint16_t groupAddress)
 {
+    print("RouterObject::isGroupAddressInFilterTable ");
+    println(groupAddress);
+
     if (loadState() != LS_LOADED)
         return false;
 
-    uint8_t filterTableUse = 0x00;
-    if (property(PID_FILTER_TABLE_USE)->read(filterTableUse) == 0)
-        return true; // TODO: change once filter is correctly loaded
+    uint8_t filterTableUse = 0x01;
+    Property* propFilterTableUse = property(PID_FILTER_TABLE_USE);
+    if(propFilterTableUse) // check if property PID_FILTER_TABLE_USE exists (only coupler 20), if not, ignore this
+        if (propFilterTableUse->read(filterTableUse) == 0)  // check if property PID_FILTER_TABLE_USE is empty, if so, return false
+            return false;
 
     if ((filterTableUse&0x01) == 1)
     {
+        uint8_t* filterTable = 0;//data();
         // octet_address = GA_value div 8
         // bit_position = GA_value mod 8
         uint16_t octetAddress = groupAddress / 8;
         uint8_t bitPosition = groupAddress % 8;
+        
 
-        return (data()[octetAddress] & (1 << bitPosition)) == (1 << bitPosition);
+        if(filterTable)
+            return (filterTable[octetAddress] & (1 << bitPosition)) == (1 << bitPosition);
+        else
+        {
+            println("RouterObject::isGroupAddressInFilterTable filterTable is NULL");
+            return false;
+        }
     }
 
     return false;

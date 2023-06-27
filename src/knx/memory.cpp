@@ -114,7 +114,7 @@ void Memory::readMemory()
         buffer = _tableObjects[i]->restore(buffer);
         uint16_t memorySize = 0;
         buffer = popWord(memorySize, buffer);
-
+        println(memorySize);
         if (memorySize == 0)
             continue;
 

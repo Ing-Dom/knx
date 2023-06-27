@@ -54,5 +54,6 @@ private:
 
   bool _rfSbcRoutingEnabled = false;
   bool _ipSbcRoutingEnabled = false;
-  uint16_t* _filterTableGroupAddresses = 0;
+  uint16_t* _filterTableGroupAddresses = 0; // // ToDo
+  CouplerModel _model = CouplerModel::Model_20;
 };
