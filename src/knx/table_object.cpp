@@ -75,7 +75,8 @@ uint8_t* TableObject::save(uint8_t* buffer)
 
 const uint8_t* TableObject::restore(const uint8_t* buffer)
 {
-    println("TableObject::restore");// DEBUGTODO
+    //println("TableObject::restore");
+
     uint8_t state = 0;
     buffer = popByte(state, buffer);
     _state = (LoadState)state;
@@ -84,13 +85,13 @@ const uint8_t* TableObject::restore(const uint8_t* buffer)
 
     uint32_t relativeAddress = 0;
     buffer = popInt(relativeAddress, buffer);
-    println(relativeAddress);// DEBUGTODO
+    //println(relativeAddress);
 
     if (relativeAddress != 0)
         _data = _memory.toAbsolute(relativeAddress);
     else
         _data = 0;
-    println((uint32_t)_data);// DEBUGTODO
+    //println((uint32_t)_data);
     return InterfaceObject::restore(buffer);
 }
 
@@ -142,7 +143,7 @@ void TableObject::allocTableStatic()
 
 void TableObject::loadEvent(const uint8_t* data)
 {
-    printHex("TableObject::loadEvent 0x", data, 10);
+    //printHex("TableObject::loadEvent 0x", data, 10);
     switch (_state)
     {
         case LS_UNLOADED:

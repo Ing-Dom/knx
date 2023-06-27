@@ -36,7 +36,6 @@ public:
 
   void masterReset(EraseCode eraseCode, uint8_t channel) override;
 
-  uint8_t* save(uint8_t* buffer) override;
   const uint8_t* restore(const uint8_t* buffer) override;
 
 protected:
@@ -55,6 +54,5 @@ private:
 
   bool _rfSbcRoutingEnabled = false;
   bool _ipSbcRoutingEnabled = false;
-  uint16_t* _filterTableGroupAddresses = 0; // // ToDo
   CouplerModel _model = CouplerModel::Model_20;
 };

@@ -35,7 +35,9 @@ typedef VersionCheckResult (*VersionCheckCallback)(uint16_t manufacturerId, uint
 
 class Memory
 {
-public:
+    friend class TableObject;
+    
+  public:
     Memory(Platform& platform, DeviceObject& deviceObject);
     virtual ~Memory();
     void readMemory();
@@ -52,7 +54,6 @@ public:
 
     void versionCheckCallback(VersionCheckCallback func);
     VersionCheckCallback versionCheckCallback();
-    void addNewUsedBlock(uint8_t* address, size_t size);
 
   private:
     void removeFromFreeList(MemoryBlock* block);
@@ -62,6 +63,7 @@ public:
     uint16_t alignToPageSize(size_t size);
     MemoryBlock* removeFromList(MemoryBlock* head, MemoryBlock* item);
     MemoryBlock* findBlockInList(MemoryBlock* head, uint8_t* address);
+    void addNewUsedBlock(uint8_t* address, size_t size);
 
 
     void readEraseBlockToBuffer(uint32_t blockNum);

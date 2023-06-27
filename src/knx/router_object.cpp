@@ -178,11 +178,6 @@ void RouterObject::initialize(CouplerModel model, uint8_t objIndex, DptMedium me
         InterfaceObject::initializeProperties(sizeof(allProperties), allProperties);
 }
 
-uint8_t* RouterObject::save(uint8_t* buffer)
-{
-    return TableObject::save(buffer);
-}
-
 const uint8_t* RouterObject::restore(const uint8_t* buffer)
 {
 
@@ -191,21 +186,26 @@ const uint8_t* RouterObject::restore(const uint8_t* buffer)
 
 void RouterObject::commandClearSetRoutingTable(bool bitIsSet)
 {
+#ifdef KNX_LOG_COUPLER
     print("RouterObject::commandClearSetRoutingTable ");
     println(bitIsSet);
+#endif
     for (uint16_t i = 0; i < kFilterTableSize; i++)
     {
-        data()[i] = bitIsSet ? 0xFF : 0x00;
+        data()[i] = bitIsSet ? 0xFF : 0x00; // ToDo: nvram cannot be set this way!
+        //_memory.writeMemory()
     }
 }
 
 bool RouterObject::statusClearSetRoutingTable(bool bitIsSet)
 {
+#ifdef KNX_LOG_COUPLER
     print("RouterObject::statusClearSetRoutingTable ");
     println(bitIsSet);
+#endif
     for (uint16_t i = 0; i < kFilterTableSize; i++)
     {
-        if (data()[i] != (bitIsSet ? 0xFF : 0x00))
+        if (data()[i] != (bitIsSet ? 0xFF : 0x00)) // ToDo: nvram cannot be set this way!
             return false;
     }
     return true;
@@ -213,12 +213,14 @@ bool RouterObject::statusClearSetRoutingTable(bool bitIsSet)
 
 void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t endAddress, bool bitIsSet)
 {
+#ifdef KNX_LOG_COUPLER
     print("RouterObject::commandClearSetGroupAddress ");
     print(startAddress);
     print(" ");
     print(endAddress);
     print(" ");
     println(bitIsSet);
+#endif
 
     uint16_t startOctet = startAddress / 8;
     uint8_t startBitPosition = startAddress % 8;
@@ -230,9 +232,9 @@ void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t e
         for (uint8_t bitPos = startBitPosition; bitPos <= endBitPosition; bitPos++)
         {
             if (bitIsSet)
-                data()[startOctet] |= 1 << bitPos;
+                data()[startOctet] |= 1 << bitPos; // ToDo: nvram cannot be set this way!
             else
-                data()[startOctet] &= ~(1 << bitPos);
+                data()[startOctet] &= ~(1 << bitPos); // ToDo: nvram cannot be set this way!
         }
         return;
     }
@@ -244,9 +246,9 @@ void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t e
             for (uint8_t bitPos = startBitPosition; bitPos <= 7; bitPos++)
             {
                 if (bitIsSet)
-                    data()[i] |= 1 << bitPos;
+                    data()[i] |= 1 << bitPos; // ToDo: nvram cannot be set this way!
                 else
-                    data()[i] &= ~(1 << bitPos);
+                    data()[i] &= ~(1 << bitPos); // ToDo: nvram cannot be set this way!
             }
         }
         else if (i == endOctet)
@@ -254,29 +256,31 @@ void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t e
             for (uint8_t bitPos = 0; bitPos <= endBitPosition; bitPos++)
             {
                 if (bitIsSet)
-                    data()[i] |= 1 << bitPos;
+                    data()[i] |= 1 << bitPos; // ToDo: nvram cannot be set this way!
                 else
-                    data()[i] &= ~(1 << bitPos);
+                    data()[i] &= ~(1 << bitPos); // ToDo: nvram cannot be set this way!
             }
         }
         else
         {
             if (bitIsSet)
-                data()[i] = 0xFF;
+                data()[i] = 0xFF; // ToDo: nvram cannot be set this way!
             else
-                data()[i] = 0x00;
+                data()[i] = 0x00; // ToDo: nvram cannot be set this way!
         }
     }
 }
 
 bool RouterObject::statusClearSetGroupAddress(uint16_t startAddress, uint16_t endAddress, bool bitIsSet)
 {
+#ifdef KNX_LOG_COUPLER
     print("RouterObject::statusClearSetGroupAddress ");
     print(startAddress);
     print(" ");
     print(endAddress);
     print(" ");
     println(bitIsSet);
+#endif
 
     uint16_t startOctet = startAddress / 8;
     uint8_t startBitPosition = startAddress % 8;
@@ -347,10 +351,12 @@ bool RouterObject::statusClearSetGroupAddress(uint16_t startAddress, uint16_t en
 
 void RouterObject::functionRouteTableControl(bool isCommand, uint8_t* data, uint8_t length, uint8_t* resultData, uint8_t& resultLength)
 {
+#ifdef KNX_LOG_COUPLER
     print("RouterObject::functionRouteTableControl ");
     print(isCommand);
     print(" ");
     printHex("", data, length);
+#endif
 
     RouteTableServices srvId = (RouteTableServices) data[1];
 
@@ -463,17 +469,21 @@ void RouterObject::functionRfEnableSbc(bool isCommand, uint8_t* data, uint8_t le
 
 bool RouterObject::isRfSbcRoutingEnabled()
 {
+#ifdef KNX_LOG_COUPLER
     print("RouterObject::isRfSbcRoutingEnabled ");
     println(_rfSbcRoutingEnabled);
+#endif
     return _rfSbcRoutingEnabled;
 }
 
 // TODO: check if IP SBC works the same way, just copied from RF
 void RouterObject::functionIpEnableSbc(bool isCommand, uint8_t* data, uint8_t length, uint8_t* resultData, uint8_t& resultLength)
 {
+#ifdef KNX_LOG_COUPLER
     print("RouterObject::functionIpEnableSbc ");
     print(isCommand);
     printHex(" ", data, length);
+#endif
 
     if (isCommand)
     {
@@ -488,26 +498,30 @@ void RouterObject::functionIpEnableSbc(bool isCommand, uint8_t* data, uint8_t le
 // TODO: check if IP SBC works the same way, just copied from RF
 bool RouterObject::isIpSbcRoutingEnabled()
 {
+#ifdef KNX_LOG_COUPLER
     print("RouterObject::isIpSbcRoutingEnabled ");
     println(_ipSbcRoutingEnabled);
+#endif
     return _ipSbcRoutingEnabled;
 }
 
 void RouterObject::beforeStateChange(LoadState& newState)
 {
+#ifdef KNX_LOG_COUPLER
     println("RouterObject::beforeStateChange");
+#endif
     if (newState != LS_LOADED)
         return;
-
-    _filterTableGroupAddresses = (uint16_t*)data(); // ToDo
 }
 
 void RouterObject::masterReset(EraseCode eraseCode, uint8_t channel)
 {
+#ifdef KNX_LOG_COUPLER
     print("RouterObject::masterReset ");
     print(eraseCode);
     print(" ");
     println(channel);
+#endif
 
     if (eraseCode == FactoryReset)
     {

@@ -45,7 +45,7 @@ class TableObject: public InterfaceObject
 
     /**
      * returns the internal data of the interface object. This pointer belongs to the TableObject class and 
-     * must not be freed.
+     * must not be written at nor freed.
      */
     uint8_t* data();
     /**
@@ -56,6 +56,8 @@ class TableObject: public InterfaceObject
     void initializeProperties(size_t propertiesSize, Property** properties) override;
 
     static BeforeTablesUnloadCallback _beforeTablesUnload;
+
+    Memory& _memory;
 
   private:
     uint32_t tableReference();
@@ -78,7 +80,6 @@ class TableObject: public InterfaceObject
      */
     void loadState(LoadState newState);
     LoadState _state = LS_UNLOADED;
-    Memory& _memory;
     uint8_t *_data = 0;
     static uint8_t _tableUnloadCount;
     uint32_t _staticTableAdr;
