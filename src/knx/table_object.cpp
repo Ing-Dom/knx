@@ -19,9 +19,12 @@ BeforeTablesUnloadCallback TableObject::beforeTablesUnloadCallback()
     return _beforeTablesUnload;
 }
 
-TableObject::TableObject(Memory& memory)
+TableObject::TableObject(Memory& memory, uint32_t staticTableAdr , uint32_t staticTableSize)
     : _memory(memory)
-{}
+{
+    _staticTableAdr = staticTableAdr;
+    _staticTableSize = staticTableSize;
+}
 
 TableObject::~TableObject()
 {}
@@ -55,6 +58,8 @@ void TableObject::loadState(LoadState newState)
 
 uint8_t* TableObject::save(uint8_t* buffer)
 {
+    allocTableStatic();
+
     buffer = pushByte(_state, buffer);
 
     buffer = pushInt(_size, buffer);
@@ -70,6 +75,7 @@ uint8_t* TableObject::save(uint8_t* buffer)
 
 const uint8_t* TableObject::restore(const uint8_t* buffer)
 {
+    println("TableObject::restore");// DEBUGTODO
     uint8_t state = 0;
     buffer = popByte(state, buffer);
     _state = (LoadState)state;
@@ -78,12 +84,13 @@ const uint8_t* TableObject::restore(const uint8_t* buffer)
 
     uint32_t relativeAddress = 0;
     buffer = popInt(relativeAddress, buffer);
+    println(relativeAddress);// DEBUGTODO
 
     if (relativeAddress != 0)
         _data = _memory.toAbsolute(relativeAddress);
     else
         _data = 0;
-
+    println((uint32_t)_data);// DEBUGTODO
     return InterfaceObject::restore(buffer);
 }
 
@@ -94,6 +101,9 @@ uint32_t TableObject::tableReference()
 
 bool TableObject::allocTable(uint32_t size, bool doFill, uint8_t fillByte)
 {
+    if(_staticTableAdr)
+        return false;
+
     if (_data)
     {
         _memory.freeMemory(_data);
@@ -119,8 +129,20 @@ bool TableObject::allocTable(uint32_t size, bool doFill, uint8_t fillByte)
     return true;
 }
 
+
+void TableObject::allocTableStatic()
+{
+    if(_staticTableAdr && !_data)
+    {
+        _data = _memory.toAbsolute(_staticTableAdr);
+        _size = _staticTableSize;
+        _memory.addNewUsedBlock(_data, _size);
+    }
+}
+
 void TableObject::loadEvent(const uint8_t* data)
 {
+    printHex("TableObject::loadEvent 0x", data, 10);
     switch (_state)
     {
         case LS_UNLOADED:
@@ -271,9 +293,7 @@ uint16_t TableObject::saveSize()
 
 void TableObject::initializeProperties(size_t propertiesSize, Property** properties)
 {
-    Property* ownProperties[] =
-    {
-        new CallbackProperty<TableObject>(this, PID_LOAD_STATE_CONTROL, true, PDT_CONTROL, 1, ReadLv3 | WriteLv3,
+     Property* loadStateProperty = new CallbackProperty<TableObject>(this, PID_LOAD_STATE_CONTROL, true, PDT_CONTROL, 1, ReadLv3 | WriteLv3,
             [](TableObject* obj, uint16_t start, uint8_t count, uint8_t* data) -> uint8_t {
                 if(start == 0)
                 {
@@ -288,7 +308,10 @@ void TableObject::initializeProperties(size_t propertiesSize, Property** propert
             [](TableObject* obj, uint16_t start, uint8_t count, const uint8_t* data) -> uint8_t {
                 obj->loadEvent(data);
                 return 1;
-            }),
+            });
+
+    Property* ownProperties[] =
+    {
         new CallbackProperty<TableObject>(this, PID_TABLE_REFERENCE, false, PDT_UNSIGNED_LONG, 1, ReadLv3 | WriteLv0,
             [](TableObject* obj, uint16_t start, uint8_t count, uint8_t* data) -> uint8_t {
                 if(start == 0)
@@ -325,14 +348,21 @@ void TableObject::initializeProperties(size_t propertiesSize, Property** propert
 
     //      23 PID_TABLE 3 / (3)
 
-    uint8_t ownPropertiesCount = sizeof(ownProperties) / sizeof(Property*);
+    uint8_t ownPropertiesCount = 1;
+    //loadStateProperty
+
+
+    if(!_staticTableAdr)
+        ownPropertiesCount += sizeof(ownProperties) / sizeof(Property*);
 
     uint8_t propertyCount = propertiesSize / sizeof(Property*);
     uint8_t allPropertiesCount = propertyCount + ownPropertiesCount;
 
     Property* allProperties[allPropertiesCount];
     memcpy(allProperties, properties, propertiesSize);
-    memcpy(allProperties + propertyCount, ownProperties, sizeof(ownProperties));
+    memcpy(allProperties + propertyCount, loadStateProperty, sizeof(Property*));
+    if(!_staticTableAdr)
+        memcpy(allProperties + propertyCount +1, ownProperties, sizeof(ownProperties));
 
     InterfaceObject::initializeProperties(sizeof(allProperties), allProperties);
 }

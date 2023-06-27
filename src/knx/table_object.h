@@ -18,7 +18,7 @@ class TableObject: public InterfaceObject
      * The constuctor.
      * @param memory The instance of the memory management class to use.
      */
-    TableObject(Memory& memory);
+    TableObject(Memory& memory, uint32_t staticTableAdr = 0, uint32_t staticTableSize = 0);
 
     /**
      * The destructor.
@@ -60,6 +60,7 @@ class TableObject: public InterfaceObject
   private:
     uint32_t tableReference();
     bool allocTable(uint32_t size, bool doFill, uint8_t fillByte);
+    void allocTableStatic();
     void loadEvent(const uint8_t* data);
     void loadEventUnloaded(const uint8_t* data);
     void loadEventLoading(const uint8_t* data);
@@ -78,6 +79,8 @@ class TableObject: public InterfaceObject
     Memory& _memory;
     uint8_t *_data = 0;
     static uint8_t _tableUnloadCount;
+    uint32_t _staticTableAdr;
+    uint32_t _staticTableSize;
 
     /**
      * used to store size of data() in allocTable(), needed for calculation of crc in PID_MCB_TABLE.
