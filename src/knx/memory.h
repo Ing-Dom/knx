@@ -36,7 +36,7 @@ typedef VersionCheckResult (*VersionCheckCallback)(uint16_t manufacturerId, uint
 class Memory
 {
     friend class TableObject;
-    
+
   public:
     Memory(Platform& platform, DeviceObject& deviceObject);
     virtual ~Memory();

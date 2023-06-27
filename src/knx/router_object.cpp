@@ -180,7 +180,6 @@ void RouterObject::initialize(CouplerModel model, uint8_t objIndex, DptMedium me
 
 const uint8_t* RouterObject::restore(const uint8_t* buffer)
 {
-
     return TableObject::restore(buffer);
 }
 
@@ -190,10 +189,13 @@ void RouterObject::commandClearSetRoutingTable(bool bitIsSet)
     print("RouterObject::commandClearSetRoutingTable ");
     println(bitIsSet);
 #endif
+    uint8_t fillbyte = bitIsSet ? 0xFF : 0x00;
+    uint32_t relptr = _memory.toRelative(data());
+    println(relptr);
+    println((uint32_t)data());
     for (uint16_t i = 0; i < kFilterTableSize; i++)
     {
-        data()[i] = bitIsSet ? 0xFF : 0x00; // ToDo: nvram cannot be set this way!
-        //_memory.writeMemory()
+        _memory.writeMemory(relptr+i, 1, &fillbyte);
     }
 }
 
@@ -205,7 +207,7 @@ bool RouterObject::statusClearSetRoutingTable(bool bitIsSet)
 #endif
     for (uint16_t i = 0; i < kFilterTableSize; i++)
     {
-        if (data()[i] != (bitIsSet ? 0xFF : 0x00)) // ToDo: nvram cannot be set this way!
+        if (data()[i] != (bitIsSet ? 0xFF : 0x00))
             return false;
     }
     return true;

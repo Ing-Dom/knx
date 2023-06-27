@@ -58,6 +58,7 @@ void TableObject::loadState(LoadState newState)
 
 uint8_t* TableObject::save(uint8_t* buffer)
 {
+    //println("TableObject::save");
     allocTableStatic();
 
     buffer = pushByte(_state, buffer);
@@ -223,8 +224,11 @@ void TableObject::loadEventLoaded(const uint8_t* data)
             //free nv memory
             if (_data)
             {
-                _memory.freeMemory(_data);
-                _data = 0;
+                if(!_staticTableAdr)
+                {
+                    _memory.freeMemory(_data);
+                    _data = 0;
+                }
             }
             break;
         case LE_ADDITIONAL_LOAD_CONTROLS:
