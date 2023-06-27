@@ -10,7 +10,7 @@ using namespace std;
 
 Bau091A::Bau091A(Platform& platform)
     : BauSystemBCoupler(platform),
-      _routerObj(memory()),
+      _routerObj(memory(), 0x200, 0x2000),  // the Filtertable of 0x091A IP Routers is fixed at 0x200 and 0x2000 long
       _ipParameters(_deviceObj, platform),
       _dlLayerPrimary(_deviceObj, _ipParameters, _netLayer.getPrimaryInterface(), _platform),
       _dlLayerSecondary(_deviceObj, _netLayer.getSecondaryInterface(), platform, (ITpUartCallBacks&) *this)
@@ -155,7 +155,7 @@ bool Bau091A::isAckRequired(uint16_t address, bool isGrpAddr)
         if (address == 0)
             return true;
 
-        // is group address in filter table? ACK if yes.
+        // is group address in filter table? ACK if yes. Todo ACK All
         return _routerObj.isGroupAddressInFilterTable(address);
     }
     else

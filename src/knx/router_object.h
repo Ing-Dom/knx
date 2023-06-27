@@ -23,7 +23,7 @@ enum RouterObjectType
 class RouterObject : public TableObject
 {
 public:
-  RouterObject(Memory& memory);
+  RouterObject(Memory& memory, uint32_t staticTableAdr = 0, uint32_t staticTableSize = 0);
 
   void initialize1x(DptMedium mediumType, uint16_t maxApduSize);
   void initialize20(uint8_t objIndex, DptMedium mediumType, RouterObjectType rtType, uint16_t maxApduSize);
@@ -36,6 +36,7 @@ public:
 
   void masterReset(EraseCode eraseCode, uint8_t channel) override;
 
+  uint8_t* save(uint8_t* buffer) override;
   const uint8_t* restore(const uint8_t* buffer) override;
 
 protected:

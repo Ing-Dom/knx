@@ -26,8 +26,8 @@ enum RouteTableServices
     SetGroupAddress = 0x04,   // 4 bytes: start address and end address
 };
 
-RouterObject::RouterObject(Memory& memory)
-    : TableObject(memory)
+RouterObject::RouterObject(Memory& memory, uint32_t staticTableAdr, uint32_t staticTableSize)
+    : TableObject(memory, staticTableAdr, staticTableSize)
 {
 }
 
@@ -178,13 +178,15 @@ void RouterObject::initialize(CouplerModel model, uint8_t objIndex, DptMedium me
         InterfaceObject::initializeProperties(sizeof(allProperties), allProperties);
 }
 
+uint8_t* RouterObject::save(uint8_t* buffer)
+{
+    return TableObject::save(buffer);
+}
+
 const uint8_t* RouterObject::restore(const uint8_t* buffer)
 {
-    buffer = TableObject::restore(buffer);
 
-    _filterTableGroupAddresses = (uint16_t*)data(); // ToDo
-
-    return buffer;
+    return TableObject::restore(buffer);
 }
 
 void RouterObject::commandClearSetRoutingTable(bool bitIsSet)
@@ -516,9 +518,6 @@ void RouterObject::masterReset(EraseCode eraseCode, uint8_t channel)
 
 bool RouterObject::isGroupAddressInFilterTable(uint16_t groupAddress)
 {
-    print("RouterObject::isGroupAddressInFilterTable ");
-    println(groupAddress);
-
     if (loadState() != LS_LOADED)
         return false;
 
@@ -530,7 +529,7 @@ bool RouterObject::isGroupAddressInFilterTable(uint16_t groupAddress)
 
     if ((filterTableUse&0x01) == 1)
     {
-        uint8_t* filterTable = 0;//data();
+        uint8_t* filterTable = data();
         // octet_address = GA_value div 8
         // bit_position = GA_value mod 8
         uint16_t octetAddress = groupAddress / 8;
