@@ -135,7 +135,6 @@ int KNX_Decode_Value(uint8_t* payload, size_t payload_length, const Dpt& datatyp
 
 int KNX_Encode_Value(const KNXValue& value, uint8_t* payload, size_t payload_length, const Dpt& datatype)
 {
-
     if (datatype.mainGroup == 1 && datatype.subGroup >= 1 && datatype.subGroup <= 23 && datatype.subGroup != 20 && !datatype.index)
         return valueToBusValueBinary(value, payload, payload_length, datatype);
     // DPT 2.* - Binary Control
@@ -417,6 +416,7 @@ int busValueToTime(const uint8_t* payload, size_t payload_length, const Dpt& dat
         case 1:
         {
             unsigned char hours = unsigned8FromPayload(payload, 0) & 0x1F;
+            unsigned char weekDay = (unsigned8FromPayload(payload, 0) & 0xE0) >> 5;
             unsigned char minutes = unsigned8FromPayload(payload, 1) & 0x3F;
             unsigned char seconds = unsigned8FromPayload(payload, 2) & 0x3F;
 
@@ -424,6 +424,7 @@ int busValueToTime(const uint8_t* payload, size_t payload_length, const Dpt& dat
                 return false;
             struct tm tmp = {0};
             tmp.tm_hour = hours;
+            tmp.tm_wday = weekDay;
             tmp.tm_min = minutes;
             tmp.tm_sec = seconds;
             value = tmp;
@@ -1553,7 +1554,6 @@ int valueToBusValueRGBW(const KNXValue& value, uint8_t* payload, size_t payload_
         case 1: // Mask bits
             unsigned8ToPayload(payload, payload_length, 5, (uint8_t)value, 0x0f);
             break;
-
     }
     return true;
 }
@@ -1757,7 +1757,7 @@ void float16ToPayload(uint8_t* payload, size_t payload_length, int index, double
     if (wasNegative)
         mantissa *= -1;
 
-    println(mantissa);
+    // println(mantissa);
     
     signed16ToPayload(payload, payload_length, index, mantissa, mask);
     unsigned8ToPayload(payload, payload_length, index, exponent << 3, 0x78 & (mask >> 8));

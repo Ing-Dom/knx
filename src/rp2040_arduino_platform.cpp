@@ -35,6 +35,7 @@ A RAM-buffered Flash can be use by defining USE_RP2040_LARGE_EEPROM_EMULATION
 
 #define FLASHPTR ((uint8_t*)XIP_BASE + KNX_FLASH_OFFSET)
 
+#ifndef USE_RP2040_EEPROM_EMULATION
 #if KNX_FLASH_SIZE%4096
 #error "KNX_FLASH_SIZE must be multiple of 4096"
 #endif
@@ -42,11 +43,15 @@ A RAM-buffered Flash can be use by defining USE_RP2040_LARGE_EEPROM_EMULATION
 #if KNX_FLASH_OFFSET%4096
 #error "KNX_FLASH_OFFSET must be multiple of 4096"
 #endif
+#endif
 
+#ifndef KNX_SERIAL
+#define KNX_SERIAL Serial1
+#endif
 
 RP2040ArduinoPlatform::RP2040ArduinoPlatform()
 #ifndef KNX_NO_DEFAULT_UART
-    : ArduinoPlatform(&Serial1)
+    : ArduinoPlatform(&KNX_SERIAL)
 #endif
 {
     #ifndef USE_RP2040_EEPROM_EMULATION
@@ -104,7 +109,7 @@ void RP2040ArduinoPlatform::restart()
 
 #ifdef USE_RP2040_LARGE_EEPROM_EMULATION
 
-uint8_t * RP2040ArduinoPlatform::getEepromBuffer(uint16_t size)
+uint8_t * RP2040ArduinoPlatform::getEepromBuffer(uint32_t size)
 {
     if(size%4096)
     {
@@ -139,7 +144,7 @@ void RP2040ArduinoPlatform::commitToEeprom()
 
 #else
 
-uint8_t * RP2040ArduinoPlatform::getEepromBuffer(uint16_t size)
+uint8_t * RP2040ArduinoPlatform::getEepromBuffer(uint32_t size)
 {
     if(size > 4096)
     {

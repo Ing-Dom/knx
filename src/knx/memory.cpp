@@ -127,7 +127,7 @@ void Memory::readMemory()
 void Memory::writeMemory()
 {
     // first get the necessary size of the writeBuffer
-    size_t writeBufferSize = _metadataSize;
+    uint16_t writeBufferSize = _metadataSize;
     for (int i = 0; i < _saveCount; i++)
         writeBufferSize = MAX(writeBufferSize, _saveRestores[i]->saveSize());
 
@@ -162,7 +162,6 @@ void Memory::writeMemory()
         //save to size of the memoryblock for tableobject too, so that we can rebuild the usedList and freeList
         if (_tableObjects[i]->_data != nullptr)
         {
-
             MemoryBlock* block = findBlockInList(_usedList, _tableObjects[i]->_data);
             if (block == nullptr)
             {

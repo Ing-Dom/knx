@@ -48,11 +48,21 @@
 #else
 #if !defined(LED_BUILTIN)
     #define LED_BUILTIN 5 // see GPIO_PinConfig gpioPinConfigs[]
- #endif   
+#endif
     #include "cc1310_platform.h"
     #ifndef KNX_NO_AUTOMATIC_GLOBAL_INSTANCE
         extern void buttonUp();
     #endif
+#endif
+
+#ifndef KNX_LED
+    #define KNX_LED LED_BUILTIN
+#endif
+#ifndef KNX_LED_ACTIVE_ON
+    #define KNX_LED_ACTIVE_ON 0
+#endif
+#ifndef KNX_BUTTON
+    #define KNX_BUTTON -1
 #endif
 
 typedef const uint8_t* (*RestoreCallback)(const uint8_t* buffer);
@@ -73,6 +83,7 @@ template <class P, class B> class KnxFacade : private SaveRestore
 
     KnxFacade(B& bau) : _bau(bau)
     {
+        _platformPtr = static_cast<P*>(&bau.platform());
         manufacturerId(0xfa);
         bauNumber(platform().uniqueSerialNumber());
         _bau.addSaveRestore(this);
@@ -176,30 +187,13 @@ template <class P, class B> class KnxFacade : private SaveRestore
         _progLedOnCallback = progLedOnCallback;
     }
 
-    /**
-     * returns RISING if interrupt is created in a rising signal, FALLING otherwise
-     */
-    uint32_t buttonPinInterruptOn()
-    {
-        return _buttonPinInterruptOn;
-    }
-
-    /**
-     * Sets if the programming button creates a RISING or a FALLING signal. 
-     * 
-     * Set to RISING for GPIO--BUTTON--VDD or to FALLING for GPIO--BUTTON--GND
-     */
-    void buttonPinInterruptOn(uint32_t value)
-    {
-        _buttonPinInterruptOn = value;
-    }
-
-    uint32_t buttonPin()
+  
+    int32_t buttonPin()
     {
         return _buttonPin;
     }
 
-    void buttonPin(uint32_t value)
+    void buttonPin(int32_t value)
     {
         _buttonPin = value;
     }
@@ -276,13 +270,13 @@ template <class P, class B> class KnxFacade : private SaveRestore
         progLedOff();
         pinMode(buttonPin(), INPUT_PULLUP);
 
-        if (_progButtonISRFuncPtr)
+        if (_progButtonISRFuncPtr && _buttonPin >= 0)
         {
             // Workaround for https://github.com/arduino/ArduinoCore-samd/issues/587
             #if (ARDUINO_API_VERSION >= 10200)
-                attachInterrupt(_buttonPin, _progButtonISRFuncPtr, (PinStatus)_buttonPinInterruptOn);
+                attachInterrupt(_buttonPin, _progButtonISRFuncPtr, (PinStatus)CHANGE);
             #else
-                attachInterrupt(_buttonPin, _progButtonISRFuncPtr, _buttonPinInterruptOn);
+                attachInterrupt(_buttonPin, _progButtonISRFuncPtr, CHANGE);
             #endif
         }
 
@@ -420,10 +414,9 @@ template <class P, class B> class KnxFacade : private SaveRestore
     B& _bau;
     ProgLedOnCallback _progLedOnCallback = 0;
     ProgLedOffCallback _progLedOffCallback = 0;
-    uint32_t _ledPinActiveOn = LOW;
-    uint32_t _ledPin = LED_BUILTIN;
-    uint32_t _buttonPinInterruptOn = RISING;
-    uint32_t _buttonPin = 0;
+    uint32_t _ledPinActiveOn = KNX_LED_ACTIVE_ON;
+    uint32_t _ledPin = KNX_LED;
+    int32_t _buttonPin = KNX_BUTTON;
     SaveCallback _saveCallback = 0;
     RestoreCallback _restoreCallback = 0;
     volatile bool _toggleProgMode = false;

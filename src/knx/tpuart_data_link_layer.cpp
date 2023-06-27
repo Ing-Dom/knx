@@ -123,11 +123,16 @@ void TpUartDataLinkLayer::loop()
 {
     if (!_enabled)
     {
-        if (millis() - _lastResetChipTime > 1000)
-        { 
-            //reset chip every 1 seconds
-            _lastResetChipTime = millis();
-            _enabled = resetChip();
+        if(_waitConfirmStartTime == 0)
+        {
+            if (millis() - _lastResetChipTime > 1000)
+            { 
+                //reset chip every 1 seconds
+                _lastResetChipTime = millis();
+                _enabled = resetChip();
+            }
+        } else {
+            _enabled = resetChipTick();
         }
     }
 
@@ -335,7 +340,7 @@ void TpUartDataLinkLayer::loop()
 #ifdef DBG_TRACE
                     print(rxByte, HEX);
 #endif
-                    if (_RxByteCnt == MAX_KNX_TELEGRAM_SIZE)
+                    if (_RxByteCnt == MAX_KNX_TELEGRAM_SIZE - 2)
                     {
                         println("invalid telegram size");
                         enterRxWaitEOP();
@@ -401,6 +406,8 @@ void TpUartDataLinkLayer::loop()
                     }
                     break;
                 default:
+                    println("invalid _rxState");
+                    enterRxWaitEOP();
                     break;
             }
         } while (_rxState == RX_L_ADDR && (stayInRx || _platform.uartAvailable()));
@@ -483,17 +490,30 @@ bool TpUartDataLinkLayer::sendFrame(CemiFrame& frame)
 
 bool TpUartDataLinkLayer::resetChip()
 {
+    if(_waitConfirmStartTime > 0) return false;
     uint8_t cmd = U_RESET_REQ;
     _platform.writeUart(cmd);
+    
+    int resp = _platform.readUart();
+    if (resp == U_RESET_IND)
+        return true;
+
     _waitConfirmStartTime = millis();
-    while (true)
+    return false;
+}
+
+bool TpUartDataLinkLayer::resetChipTick()
+{
+    int resp = _platform.readUart();
+    if (resp == U_RESET_IND)
     {
-        int resp = _platform.readUart();
-        if (resp == U_RESET_IND)
-            return true;
-        else if (millis() - _waitConfirmStartTime > RESET_TIMEOUT)
-            return false;
+        _waitConfirmStartTime = 0;
+        return true;
     }
+    else if (millis() - _waitConfirmStartTime > RESET_TIMEOUT)
+        _waitConfirmStartTime = 0;
+    
+    return false;
 }
 
 void TpUartDataLinkLayer::stopChip()
@@ -540,7 +560,27 @@ void TpUartDataLinkLayer::enabled(bool value)
     {
         _platform.setupUart();
 
-        if (resetChip())
+        uint8_t cmd = U_RESET_REQ;
+        _platform.writeUart(cmd);
+        _waitConfirmStartTime = millis();
+        bool flag = false;
+
+        while (true)
+        {
+            int resp = _platform.readUart();
+            if (resp == U_RESET_IND)
+            {
+                flag = true;
+                break;
+            }
+            else if (millis() - _waitConfirmStartTime > RESET_TIMEOUT)
+            {
+                flag = false;
+                break;
+            }
+        }
+
+        if (flag)
         {
             _enabled = true;
             print("ownaddr ");
@@ -616,7 +656,6 @@ bool TpUartDataLinkLayer::sendSingleFrameByte()
 
 void TpUartDataLinkLayer::addFrameTxQueue(CemiFrame& frame)
 {
-
     _tx_queue_frame_t* tx_frame = new _tx_queue_frame_t;
     tx_frame->length = frame.telegramLengthtTP();
     tx_frame->data = new uint8_t[tx_frame->length];

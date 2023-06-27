@@ -21,6 +21,7 @@ class BauSystemB : protected BusAccessUnit
     virtual bool enabled() = 0;
     virtual void enabled(bool value) = 0;
 
+    Platform& platform();
     ApplicationProgramObject& parameters();
     DeviceObject& deviceObject();
 
@@ -42,6 +43,10 @@ class BauSystemB : protected BusAccessUnit
     VersionCheckCallback versionCheckCallback();
     void beforeRestartCallback(BeforeRestartCallback func);
     BeforeRestartCallback beforeRestartCallback();
+    void functionPropertyCallback(FunctionPropertyCallback func);
+    FunctionPropertyCallback functionPropertyCallback();
+    void functionPropertyStateCallback(FunctionPropertyCallback func);
+    FunctionPropertyCallback functionPropertyStateCallback();
 
   protected:
     virtual ApplicationLayer& applicationLayer() = 0;
@@ -112,4 +117,6 @@ class BauSystemB : protected BusAccessUnit
     SecurityControl _restartSecurity;
     uint32_t _restartDelay = 0;
     BeforeRestartCallback _beforeRestart = 0;
+    FunctionPropertyCallback _functionProperty = 0;
+    FunctionPropertyCallback _functionPropertyState = 0;
 };
