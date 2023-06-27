@@ -103,11 +103,15 @@ int RP2040EthArduinoPlatform::readBytesMultiCast(uint8_t* buffer, uint16_t maxLe
 bool RP2040EthArduinoPlatform::sendBytesUniCast(uint32_t addr, uint16_t port, uint8_t* buffer, uint16_t len)
 {
     IPAddress ucastaddr(htonl(addr));
+    
 #ifdef KNX_LOG_IP
     print("sendBytesUniCast to:");
     println(ucastaddr.toString().c_str());
 #endif
-    _udp_uni.begin(3671);
+
+    if(!_unicast_socket_setup)
+        _unicast_socket_setup =_udp_uni.begin(3671);
+
     if (_udp_uni.beginPacket(ucastaddr, port) == 1)
     {
         _udp_uni.write(buffer, len);
@@ -116,7 +120,7 @@ bool RP2040EthArduinoPlatform::sendBytesUniCast(uint32_t addr, uint16_t port, ui
     }
     else
         println("sendBytesUniCast beginPacket fail");
-    _udp_uni.stop();
+
     return true;
 }
 
