@@ -61,12 +61,14 @@ class TableObject: public InterfaceObject
     uint32_t tableReference();
     bool allocTable(uint32_t size, bool doFill, uint8_t fillByte);
     void allocTableStatic();
+    void initializeDynTableProperties(size_t propertiesSize, Property** properties);
     void loadEvent(const uint8_t* data);
     void loadEventUnloaded(const uint8_t* data);
     void loadEventLoading(const uint8_t* data);
     void loadEventLoaded(const uint8_t* data);
     void loadEventError(const uint8_t* data);
     void additionalLoadControls(const uint8_t* data);
+    
     /**
      * set the ::LoadState of the interface object.
      * 

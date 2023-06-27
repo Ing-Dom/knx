@@ -293,7 +293,9 @@ uint16_t TableObject::saveSize()
 
 void TableObject::initializeProperties(size_t propertiesSize, Property** properties)
 {
-     Property* loadStateProperty = new CallbackProperty<TableObject>(this, PID_LOAD_STATE_CONTROL, true, PDT_CONTROL, 1, ReadLv3 | WriteLv3,
+    Property* ownProperties[] =
+    {
+        new CallbackProperty<TableObject>(this, PID_LOAD_STATE_CONTROL, true, PDT_CONTROL, 1, ReadLv3 | WriteLv3,
             [](TableObject* obj, uint16_t start, uint8_t count, uint8_t* data) -> uint8_t {
                 if(start == 0)
                 {
@@ -308,8 +310,26 @@ void TableObject::initializeProperties(size_t propertiesSize, Property** propert
             [](TableObject* obj, uint16_t start, uint8_t count, const uint8_t* data) -> uint8_t {
                 obj->loadEvent(data);
                 return 1;
-            });
+            })
+     };
 
+    uint8_t ownPropertiesCount = sizeof(ownProperties) / sizeof(Property*);
+
+    uint8_t propertyCount = propertiesSize / sizeof(Property*);
+    uint8_t allPropertiesCount = propertyCount + ownPropertiesCount;
+
+    Property* allProperties[allPropertiesCount];
+    memcpy(allProperties, properties, propertiesSize);
+    memcpy(allProperties + propertyCount, ownProperties, sizeof(ownProperties));
+
+    if(_staticTableAdr)
+        InterfaceObject::initializeProperties(sizeof(allProperties), allProperties);
+    else
+        initializeDynTableProperties(sizeof(allProperties), allProperties);
+}
+
+void TableObject::initializeDynTableProperties(size_t propertiesSize, Property** properties)
+{
     Property* ownProperties[] =
     {
         new CallbackProperty<TableObject>(this, PID_TABLE_REFERENCE, false, PDT_UNSIGNED_LONG, 1, ReadLv3 | WriteLv0,
@@ -344,25 +364,15 @@ void TableObject::initializeProperties(size_t propertiesSize, Property** propert
             }),
         new DataProperty(PID_ERROR_CODE, false, PDT_ENUM8, 1, ReadLv3 | WriteLv0, (uint8_t)E_NO_FAULT)
      };
-    //TODO: missing
 
-    //      23 PID_TABLE 3 / (3)
-
-    uint8_t ownPropertiesCount = 1;
-    //loadStateProperty
-
-
-    if(!_staticTableAdr)
-        ownPropertiesCount += sizeof(ownProperties) / sizeof(Property*);
+    uint8_t ownPropertiesCount = sizeof(ownProperties) / sizeof(Property*);
 
     uint8_t propertyCount = propertiesSize / sizeof(Property*);
     uint8_t allPropertiesCount = propertyCount + ownPropertiesCount;
 
     Property* allProperties[allPropertiesCount];
     memcpy(allProperties, properties, propertiesSize);
-    memcpy(allProperties + propertyCount, loadStateProperty, sizeof(Property*));
-    if(!_staticTableAdr)
-        memcpy(allProperties + propertyCount +1, ownProperties, sizeof(ownProperties));
+    memcpy(allProperties + propertyCount, ownProperties, sizeof(ownProperties));
 
     InterfaceObject::initializeProperties(sizeof(allProperties), allProperties);
 }
