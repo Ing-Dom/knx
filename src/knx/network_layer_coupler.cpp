@@ -317,8 +317,6 @@ void NetworkLayerCoupler::dataIndication(AckType ack, AddressType addrType, uint
         // IGNORE_TOTALLY
         return;
     }
-
-    println("Unhandled routing case! Should not happen!");
 }
 
 void NetworkLayerCoupler::dataConfirm(AckType ack, AddressType addrType, uint16_t destination, FrameFormat format, Priority priority, uint16_t source, NPDU& npdu, bool status, uint8_t srcIfIdx)
