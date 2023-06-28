@@ -109,6 +109,73 @@ bool NetworkLayerCoupler::isRoutedIndividualAddress(uint16_t individualAddress)
 void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uint16_t destination, NPDU& npdu, Priority priority,
                                           SystemBroadcast broadcastType, uint8_t sourceInterfaceIndex, uint16_t source)
 {
+    uint8_t interfaceIndex = (sourceInterfaceIndex == kSecondaryIfIndex) ? kPrimaryIfIndex : kSecondaryIfIndex;
+
+    if(addrType == AddressType::GroupAddress)
+    {
+        uint8_t lcgrpconfig = 0;
+        Property* prop_lcgrpconfig;
+        if(sourceInterfaceIndex == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
+            prop_lcgrpconfig = _rtObjPrimary->property(PID_MAIN_LCGRPCONFIG);
+        else // direction Sec -> Prim ( e.g. TP -> IP)
+            prop_lcgrpconfig = _rtObjPrimary->property(PID_SUB_LCGRPCONFIG);
+        if(prop_lcgrpconfig)
+            prop_lcgrpconfig->read(lcgrpconfig);
+
+
+        if(destination < 0x7000) // Main group 0-13
+        {
+            // PID_SUB_LCGRPCONFIG Bit 0-1
+            switch(lcgrpconfig & LCGRPCONFIG::GROUP_6FFF)
+            {
+                case LCGRPCONFIG::GROUP_6FFFLOCK:
+                    //printHex("1drop frame to 0x", (uint8_t*)destination, 2);
+                    return;//drop
+                break;
+                case LCGRPCONFIG::GROUP_6FFFROUTE:
+                    if(isGroupAddressInFilterTable(destination))
+                        ;//send
+                    else
+                    {
+                        //printHex("2drop frame to 0x", (uint8_t*)destination, 2);
+                        return;//drop
+                    }
+                break;
+                default: // LCGRPCONFIG::GROUP_6FFFUNLOCK
+                    ;//send
+            }
+        }
+        else    // Main group 14-31
+        {
+            // PID_SUB_LCGRPCONFIG Bit 2-3 LCGRPCONFIG::GROUP_7000
+            switch(lcgrpconfig & LCGRPCONFIG::GROUP_7000)
+            {
+                case LCGRPCONFIG::GROUP_7000LOCK:
+                    //printHex("3drop frame to 0x", (uint8_t*)destination, 2);
+                    return;//drop
+                break;
+                case LCGRPCONFIG::GROUP_7000ROUTE:
+                    if(isGroupAddressInFilterTable(destination))
+                        ;//send
+                    else
+                    {
+                        //printHex("4drop frame to 0x", (uint8_t*)destination, 2);
+                        return;//drop
+                    }
+                break;
+                default: // LCGRPCONFIG::GROUP_7000UNLOCK
+                    ;//send
+            }
+        }
+    }
+    else if(addrType == AddressType::IndividualAddress)
+    {
+        if(sourceInterfaceIndex == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
+            ;
+        else // direction Sec -> Prim ( e.g. TP -> IP)
+            ;
+    }
+
     // If we have a frame from open medium on secondary side (e.g. RF) to primary side, then shall use the hop count of the primary router object
     if ((_rtObjPrimary != nullptr) && (_rtObjSecondary != nullptr) && (sourceInterfaceIndex == kSecondaryIfIndex))
     {
@@ -141,7 +208,7 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
 }
 
     // Use other interface
-    uint8_t interfaceIndex = (sourceInterfaceIndex == kSecondaryIfIndex) ? kPrimaryIfIndex : kSecondaryIfIndex;
+    
 #ifdef KNX_LOG_COUPLER
     if (sourceInterfaceIndex == 0)
         print("Routing from P->S: ");
@@ -301,22 +368,22 @@ void NetworkLayerCoupler::dataIndication(AckType ack, AddressType addrType, uint
         routeDataIndividual(ack, destination, npdu, priority, source, srcIfIdx);
         return;
     }
-
+    printHex("NetworkLayerCoupler::dataIndication to GA ", (uint8_t*)&destination, 2);
     // routing for group addresses
     // TODO: check new AN189
     // "AN189 only makes that group messages with hop count 7 cannot bypass the Filter Table unfiltered,
     // what made the Security Proxy(AN192) useless; now, hc 7 Telegrams are filtered as any other and the value is decremented.
-    if (isGroupAddressInFilterTable(destination))
-    {
+    // if (isGroupAddressInFilterTable(destination))
+    // {
         // ROUTE_XXX
         sendMsgHopCount(ack, addrType, destination, npdu, priority, Broadcast, srcIfIdx, source);
         return;
-    }
-    else
-    {
-        // IGNORE_TOTALLY
-        return;
-    }
+    // }
+    // else
+    // {
+    //     // IGNORE_TOTALLY
+    //     return;
+    // }
 }
 
 void NetworkLayerCoupler::dataConfirm(AckType ack, AddressType addrType, uint16_t destination, FrameFormat format, Priority priority, uint16_t source, NPDU& npdu, bool status, uint8_t srcIfIdx)

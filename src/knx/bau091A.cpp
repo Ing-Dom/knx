@@ -8,6 +8,12 @@
 
 using namespace std;
 
+/* ToDos
+Announce the line status of sec side 03_05_01 4.4.3
+implement PID_COUPLER_SERVICES_CONTROL 03_05_01 4.4.7
+
+*/
+
 Bau091A::Bau091A(Platform& platform)
     : BauSystemBCoupler(platform),
       _routerObj(memory(), 0x200, 0x2000),  // the Filtertable of 0x091A IP Routers is fixed at 0x200 and 0x2000 long

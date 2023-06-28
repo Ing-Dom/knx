@@ -67,10 +67,11 @@ void RouterObject::initialize(CouplerModel model, uint8_t objIndex, DptMedium me
     Property* model1xProperties[] =
     {
         // TODO: implement filtering based on this config here
-        new DataProperty( PID_MAIN_LCCONFIG, true, PDT_BITSET8, 1, ReadLv3 | WriteLv0, (uint8_t) 0 ), // Primary: data individual (connless and connorient) + broadcast
-        new DataProperty( PID_SUB_LCCONFIG, true, PDT_BITSET8, 1, ReadLv3 | WriteLv0, (uint8_t) 0 ), // Secondary: data individual (connless and connorient) + broadcast
-        new DataProperty( PID_MAIN_LCGRPCONFIG, true, PDT_BITSET8, 1, ReadLv3 | WriteLv0, (uint8_t) 0 ), // Primary: data group
-        new DataProperty( PID_SUB_LCGRPCONFIG, true, PDT_BITSET8, 1, ReadLv3 | WriteLv0, (uint8_t) 0 ), // Secondary: data group
+        // default values from Spec, see 03_05_01 4.4.4 and 4.4.5
+        new DataProperty( PID_MAIN_LCCONFIG, true, PDT_BITSET8, 1, ReadLv3 | WriteLv0, (uint8_t) 0x77 ), // Primary: data individual (connless and connorient) + broadcast
+        new DataProperty( PID_SUB_LCCONFIG, true, PDT_BITSET8, 1, ReadLv3 | WriteLv0, (uint8_t) 0x77 ), // Secondary: data individual (connless and connorient) + broadcast
+        new DataProperty( PID_MAIN_LCGRPCONFIG, true, PDT_BITSET8, 1, ReadLv3 | WriteLv0, (uint8_t) 0x17 ), // Primary: data group
+        new DataProperty( PID_SUB_LCGRPCONFIG, true, PDT_BITSET8, 1, ReadLv3 | WriteLv0, (uint8_t) 0x17 ), // Secondary: data group
     };
     uint8_t model1xPropertiesCount = sizeof(model1xProperties) / sizeof(Property*);
 
@@ -85,7 +86,6 @@ void RouterObject::initialize(CouplerModel model, uint8_t objIndex, DptMedium me
 
     Property* tableProperties[] =
     {
-        new DataProperty( PID_COUPLER_SERVICES_CONTROL, true, PDT_GENERIC_01, 1, ReadLv3 | WriteLv0, (uint8_t) 0), // written by ETS TODO: implement
         new FunctionProperty<RouterObject>(this, PID_ROUTETABLE_CONTROL,
                 // Command Callback of PID_ROUTETABLE_CONTROL
                 [](RouterObject* obj, uint8_t* data, uint8_t length, uint8_t* resultData, uint8_t& resultLength) -> void {
@@ -99,6 +99,7 @@ void RouterObject::initialize(CouplerModel model, uint8_t objIndex, DptMedium me
 
     Property* tableProperties20[] =
     {
+        new DataProperty( PID_COUPLER_SERVICES_CONTROL, true, PDT_GENERIC_01, 1, ReadLv3 | WriteLv0, (uint8_t) 0), // written by ETS TODO: implement
         new DataProperty( PID_FILTER_TABLE_USE, true, PDT_BINARY_INFORMATION, 1, ReadLv3 | WriteLv0, (uint16_t) 0 ) // default: invalid filter table, do not use, written by ETS
     };
 
