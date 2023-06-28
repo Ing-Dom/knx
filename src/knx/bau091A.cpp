@@ -12,6 +12,7 @@ using namespace std;
 Announce the line status of sec side 03_05_01 4.4.3
 implement PID_COUPLER_SERVICES_CONTROL 03_05_01 4.4.7
 
+set the repetition of tp frames according LCCConfig with U_SetRepetition.req in TPUartDataLinkLayer
 */
 
 Bau091A::Bau091A(Platform& platform)
@@ -155,13 +156,14 @@ void Bau091A::loop()
 
 bool Bau091A::isAckRequired(uint16_t address, bool isGrpAddr)
 {
+    //only called from TpUartDataLinkLayer
     if (isGrpAddr)
     {
         // ACK for broadcasts
         if (address == 0)
             return true;
 
-        // is group address in filter table? ACK if yes. Todo ACK All
+        // is group address in filter table? ACK if yes. // PROPTODO
         return _routerObj.isGroupAddressInFilterTable(address);
     }
     else

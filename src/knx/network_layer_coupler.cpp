@@ -111,7 +111,7 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
 {
     uint8_t interfaceIndex = (sourceInterfaceIndex == kSecondaryIfIndex) ? kPrimaryIfIndex : kSecondaryIfIndex;
 
-    if(addrType == AddressType::GroupAddress)
+    if(addrType == AddressType::GroupAddress) // PROPTODO 53 BROADCAST_LOCK
     {
         uint8_t lcgrpconfig = 0;
         Property* prop_lcgrpconfig;
@@ -388,6 +388,7 @@ void NetworkLayerCoupler::dataIndication(AckType ack, AddressType addrType, uint
 
 void NetworkLayerCoupler::dataConfirm(AckType ack, AddressType addrType, uint16_t destination, FrameFormat format, Priority priority, uint16_t source, NPDU& npdu, bool status, uint8_t srcIfIdx)
 {
+    println("NetworkLayerCoupler::dataConfirm");
     HopCountType hopType = npdu.hopCount() == 7 ? UnlimitedRouting : NetworkLayerParameter;
 
     // Check if received frame is an echo from our sent frame, we are a normal device in this case
