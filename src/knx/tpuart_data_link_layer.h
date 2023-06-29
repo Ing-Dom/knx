@@ -27,6 +27,7 @@ class TpUartDataLinkLayer : public DataLinkLayer
     void loop();
     void enabled(bool value);
     bool enabled() const;
+    void setFrameRepetition(uint8_t nack, uint8_t busy);
     DptMedium mediumType() const override;
 
   private:
@@ -47,6 +48,8 @@ class TpUartDataLinkLayer : public DataLinkLayer
     uint32_t _lastLoopTime;
     uint32_t _waitConfirmStartTime;
     uint32_t _lastResetChipTime = 0;
+    uint8_t _repetitionsBusy = 3;
+    uint8_t _repetitionsNack = 3;
 
     struct _tx_queue_frame_t
     {
