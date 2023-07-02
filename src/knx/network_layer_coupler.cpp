@@ -224,11 +224,43 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
 // TODO: we could also do the sanity checks here, i.e. check if sourceAddress is really coming in from correct srcIfIdx, etc. (see PID_COUPL_SERV_CONTROL: EN_SNA_INCONSISTENCY_CHECK)
 void NetworkLayerCoupler::routeDataIndividual(AckType ack, uint16_t destination, NPDU& npdu, Priority priority, uint16_t source, uint8_t srcIfIndex)
 {
+        // TODO: improve: we have to be notified about anything that might affect routing decision
+        // Ugly: we could ALWAYS evaluate coupler type for every received frame
+        if (_currentAddress != _deviceObj.individualAddress())
+        {
+            evaluateCouplerType();
+        }
+
+        // See KNX spec.: Network Layer (03/03/03) and AN161 (Coupler model 2.0)
+        /*
+            * C  hop count value contained in the N-protocol header
+            * D  low order octet of the Destination Address, i.e. Device Address part
+            * G  Group Address
+            * SD low nibble of high order octet plus low order octet, i.e. Line Address + Device Address
+            * Z  high nibble of high order octet of the Destination Address, i.e. Area Address
+            * ZS high order octet of the Destination Address, i.e. hierarchy information part: Area Address + Line Address
+        */
+        uint16_t ownSNA = _deviceObj.individualAddress() & 0xFF00; // Own subnetwork address (area + line)
+        uint16_t ownAA = _deviceObj.individualAddress() & 0xF000;  // Own area address
+        uint16_t ZS = destination & 0xFF00;                        // destination subnetwork address (area + line)
+        uint16_t Z = destination & 0xF000;                         // destination area address
+        uint16_t D = destination & 0x00FF;                         // destination device address (without subnetwork part)
+        uint16_t SD = destination & 0x0FFF;                        // destination device address (with line part, but without area part)
+
     if(destination == _deviceObj.individualAddress())
     {
         // FORWARD_LOCALLY
         HopCountType hopType = npdu.hopCount() == 7 ? UnlimitedRouting : NetworkLayerParameter;
         _transportLayer.dataIndividualIndication(destination, hopType, priority, source, npdu.tpdu());
+        return;
+    }
+
+    // Local to main or sub line
+    if (srcIfIndex == kLocalIfIndex)
+    {
+        // if destination is not within our area then send via primary interface, else via secondary interface
+        uint8_t destIfidx = (Z != ownAA) ? kPrimaryIfIndex : kSecondaryIfIndex;
+        _netLayerEntities[destIfidx].sendDataRequest(npdu, ack, destination, source, priority, AddressType::IndividualAddress, Broadcast);
         return;
     }
 
@@ -254,29 +286,6 @@ void NetworkLayerCoupler::routeDataIndividual(AckType ack, uint16_t destination,
     }
     else // LCCONFIG::PHYS_FRAME_ROUTE or 0
     {
-        // TODO: improve: we have to be notified about anything that might affect routing decision
-        // Ugly: we could ALWAYS evaluate coupler type for every received frame
-        if (_currentAddress != _deviceObj.individualAddress())
-        {
-            evaluateCouplerType();
-        }
-
-        // See KNX spec.: Network Layer (03/03/03) and AN161 (Coupler model 2.0)
-        /*
-            * C  hop count value contained in the N-protocol header
-            * D  low order octet of the Destination Address, i.e. Device Address part
-            * G  Group Address
-            * SD low nibble of high order octet plus low order octet, i.e. Line Address + Device Address
-            * Z  high nibble of high order octet of the Destination Address, i.e. Area Address
-            * ZS high order octet of the Destination Address, i.e. hierarchy information part: Area Address + Line Address
-        */
-        uint16_t ownSNA = _deviceObj.individualAddress() & 0xFF00; // Own subnetwork address (area + line)
-        uint16_t ownAA = _deviceObj.individualAddress() & 0xF000;  // Own area address
-        uint16_t ZS = destination & 0xFF00;                        // destination subnetwork address (area + line)
-        uint16_t Z = destination & 0xF000;                         // destination area address
-        uint16_t D = destination & 0x00FF;                         // destination device address (without subnetwork part)
-        uint16_t SD = destination & 0x0FFF;                        // destination device address (with line part, but without area part)
-
         if (_couplerType == LineCoupler)
         {
             // Main line to sub line routing
@@ -305,15 +314,6 @@ void NetworkLayerCoupler::routeDataIndividual(AckType ack, uint16_t destination,
                 {
                     // IGNORE_TOTALLY
                 }
-                return;
-            }
-
-            // Local to main or sub line
-            if (srcIfIndex == kLocalIfIndex)
-            {
-                // if destination is not within our subnet then send via primary interface, else via secondary interface
-                uint8_t destIfidx = (ZS != ownSNA) ? kPrimaryIfIndex : kSecondaryIfIndex;
-                _netLayerEntities[destIfidx].sendDataRequest(npdu, ack, destination, source, priority, AddressType::IndividualAddress, Broadcast);
                 return;
             }
         }
@@ -349,14 +349,7 @@ void NetworkLayerCoupler::routeDataIndividual(AckType ack, uint16_t destination,
                 return;
             }
 
-            // Local to main or sub line
-            if (srcIfIndex == kLocalIfIndex)
-            {
-                // if destination is not within our area then send via primary interface, else via secondary interface
-                uint8_t destIfidx = (Z != ownAA) ? kPrimaryIfIndex : kSecondaryIfIndex;
-                _netLayerEntities[destIfidx].sendDataRequest(npdu, ack, destination, source, priority, AddressType::IndividualAddress, Broadcast);
-                return;
-            }
+
         }
     }
 }
@@ -499,6 +492,7 @@ void NetworkLayerCoupler::dataIndividualRequest(AckType ack, uint16_t destinatio
     //    tpdu.apdu().printPDU();
     //}
     routeDataIndividual(ack, destination, npdu, priority, _deviceObj.individualAddress(), kLocalIfIndex);
+    sendMsgHopCount(ack
 }
 
 void NetworkLayerCoupler::dataGroupRequest(AckType ack, uint16_t destination, HopCountType hopType, Priority priority, TPDU& tpdu)
