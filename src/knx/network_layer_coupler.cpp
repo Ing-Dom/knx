@@ -492,7 +492,6 @@ void NetworkLayerCoupler::dataIndividualRequest(AckType ack, uint16_t destinatio
     //    tpdu.apdu().printPDU();
     //}
     routeDataIndividual(ack, destination, npdu, priority, _deviceObj.individualAddress(), kLocalIfIndex);
-    sendMsgHopCount(ack
 }
 
 void NetworkLayerCoupler::dataGroupRequest(AckType ack, uint16_t destination, HopCountType hopType, Priority priority, TPDU& tpdu)
