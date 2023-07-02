@@ -232,9 +232,6 @@ void NetworkLayerCoupler::routeDataIndividual(AckType ack, uint16_t destination,
         return;
     }
 
-    //PROPTODO PID_SUB_LCCONFIG Bit 0-1
-    // LCCONFIG::PHYS_FRAME PID_MAIN_LCCONFIG
-
     uint8_t lcconfig = 0;
     Property* prop_lcconfig;
     if(srcIfIndex == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
@@ -428,8 +425,18 @@ void NetworkLayerCoupler::broadcastIndication(AckType ack, FrameFormat format, N
         _transportLayer.dataBroadcastIndication(hopType, priority, source, npdu.tpdu());
     }
 
+    uint8_t lcconfig = 0;
+    Property* prop_lcconfig;
+    if(srcIfIdx == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
+        prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
+    else // direction Sec -> Prim ( e.g. TP -> IP)
+        prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
+    if(prop_lcconfig)
+        prop_lcconfig->read(lcconfig);
+
     // Route to other interface
-    sendMsgHopCount(ack, GroupAddress, 0, npdu, priority, Broadcast, srcIfIdx, source);
+    if(lcconfig & LCCONFIG::BROADCAST_LOCK)
+        sendMsgHopCount(ack, GroupAddress, 0, npdu, priority, Broadcast, srcIfIdx, source);
 }
 
 void NetworkLayerCoupler::broadcastConfirm(AckType ack, FrameFormat format, Priority priority, uint16_t source, NPDU& npdu, bool status, uint8_t srcIfIdx)
@@ -451,8 +458,19 @@ void NetworkLayerCoupler::systemBroadcastIndication(AckType ack, FrameFormat for
         HopCountType hopType = npdu.hopCount() == 7 ? UnlimitedRouting : NetworkLayerParameter;
         _transportLayer.dataSystemBroadcastIndication(hopType, priority, source, npdu.tpdu());
     }
+    
+        uint8_t lcconfig = 0;
+    Property* prop_lcconfig;
+    if(srcIfIdx == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
+        prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
+    else // direction Sec -> Prim ( e.g. TP -> IP)
+        prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
+    if(prop_lcconfig)
+        prop_lcconfig->read(lcconfig);
+
     // Route to other interface
-    sendMsgHopCount(ack, GroupAddress, 0, npdu, priority, SysBroadcast, srcIfIdx, source);
+    if(lcconfig & LCCONFIG::BROADCAST_LOCK)
+        sendMsgHopCount(ack, GroupAddress, 0, npdu, priority, SysBroadcast, srcIfIdx, source);
 }
 
 void NetworkLayerCoupler::systemBroadcastConfirm(AckType ack, FrameFormat format, Priority priority, uint16_t source, NPDU& npdu, bool status, uint8_t srcIfIdx)
