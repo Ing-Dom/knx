@@ -103,6 +103,7 @@ bool NetworkLayerCoupler::isRoutedIndividualAddress(uint16_t individualAddress)
         return true;
 
     // use 2 for now
+    //PROPTODO: use algo from routeIndividual ?
     return true;
 }
 
@@ -111,7 +112,7 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
 {
     uint8_t interfaceIndex = (sourceInterfaceIndex == kSecondaryIfIndex) ? kPrimaryIfIndex : kSecondaryIfIndex;
 
-    if(addrType == AddressType::GroupAddress) // PROPTODO 53 BROADCAST_LOCK
+    if(addrType == AddressType::GroupAddress)
     {
         uint8_t lcgrpconfig = 0;
         Property* prop_lcgrpconfig;
@@ -167,13 +168,7 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
             }
         }
     }
-    else if(addrType == AddressType::IndividualAddress)
-    {
-        if(sourceInterfaceIndex == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
-            ;
-        else // direction Sec -> Prim ( e.g. TP -> IP)
-            ;
-    }
+
 
     // If we have a frame from open medium on secondary side (e.g. RF) to primary side, then shall use the hop count of the primary router object
     if ((_rtObjPrimary != nullptr) && (_rtObjSecondary != nullptr) && (sourceInterfaceIndex == kSecondaryIfIndex))
@@ -204,10 +199,9 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
         {
             // ROUTE_UNMODIFIED
         }
-}
+    }
 
     // Use other interface
-    
 #ifdef KNX_LOG_COUPLER
     if (sourceInterfaceIndex == 0)
         print("Routing from P->S: ");
@@ -217,6 +211,8 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
     print(" - ");
     npdu.frame().apdu().printPDU();
 #endif
+
+    //PROPTODO evaluiate PHYS_REPEAT, BROADCAST_REPEAT and GROUP_REPEAT
     _netLayerEntities[interfaceIndex].sendDataRequest(npdu, ack, destination, source, priority, addrType, broadcastType);
 }
 
@@ -362,27 +358,21 @@ void NetworkLayerCoupler::dataIndication(AckType ack, AddressType addrType, uint
         routeDataIndividual(ack, destination, npdu, priority, source, srcIfIdx);
         return;
     }
-    printHex("NetworkLayerCoupler::dataIndication to GA ", (uint8_t*)&destination, 2);
+    //printHex("NetworkLayerCoupler::dataIndication to GA ", (uint8_t*)&destination, 2);
     // routing for group addresses
     // TODO: check new AN189
     // "AN189 only makes that group messages with hop count 7 cannot bypass the Filter Table unfiltered,
     // what made the Security Proxy(AN192) useless; now, hc 7 Telegrams are filtered as any other and the value is decremented.
-    // if (isGroupAddressInFilterTable(destination))
-    // {
-        // ROUTE_XXX
-        sendMsgHopCount(ack, addrType, destination, npdu, priority, Broadcast, srcIfIdx, source);
-        return;
-    // }
-    // else
-    // {
-    //     // IGNORE_TOTALLY
-    //     return;
-    // }
+
+    // ROUTE_XXX
+    sendMsgHopCount(ack, addrType, destination, npdu, priority, Broadcast, srcIfIdx, source);
+    return;
+
 }
 
 void NetworkLayerCoupler::dataConfirm(AckType ack, AddressType addrType, uint16_t destination, FrameFormat format, Priority priority, uint16_t source, NPDU& npdu, bool status, uint8_t srcIfIdx)
 {
-    println("NetworkLayerCoupler::dataConfirm");
+    //println("NetworkLayerCoupler::dataConfirm");
     HopCountType hopType = npdu.hopCount() == 7 ? UnlimitedRouting : NetworkLayerParameter;
 
     // Check if received frame is an echo from our sent frame, we are a normal device in this case
@@ -428,7 +418,7 @@ void NetworkLayerCoupler::broadcastIndication(AckType ack, FrameFormat format, N
         prop_lcconfig->read(lcconfig);
 
     // Route to other interface
-    if(lcconfig & LCCONFIG::BROADCAST_LOCK)
+    if(!(lcconfig & LCCONFIG::BROADCAST_LOCK))
         sendMsgHopCount(ack, GroupAddress, 0, npdu, priority, Broadcast, srcIfIdx, source);
 }
 
@@ -462,7 +452,7 @@ void NetworkLayerCoupler::systemBroadcastIndication(AckType ack, FrameFormat for
         prop_lcconfig->read(lcconfig);
 
     // Route to other interface
-    if(lcconfig & LCCONFIG::BROADCAST_LOCK)
+    if(!(lcconfig & LCCONFIG::BROADCAST_LOCK))
         sendMsgHopCount(ack, GroupAddress, 0, npdu, priority, SysBroadcast, srcIfIdx, source);
 }
 

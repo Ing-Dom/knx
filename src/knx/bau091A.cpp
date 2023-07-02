@@ -166,18 +166,33 @@ void Bau091A::loop()
 bool Bau091A::isAckRequired(uint16_t address, bool isGrpAddr)
 {
     //only called from TpUartDataLinkLayer
+
+    uint8_t lcconfig = LCCONFIG::GROUP_IACK_ROUT | LCCONFIG::PHYS_IACK_NORMAL; // default value
+    Property* prop_lcconfig = _routerObj.property(PID_SUB_LCCONFIG);
+    if(lcconfig)
+        prop_lcconfig->read(lcconfig);
+
     if (isGrpAddr)
     {
         // ACK for broadcasts
         if (address == 0)
             return true;
 
-        // is group address in filter table? ACK if yes. // PROPTODO
-        return _routerObj.isGroupAddressInFilterTable(address);
+        if(lcconfig & LCCONFIG::GROUP_IACK_ROUT)
+            // is group address in filter table? ACK if yes.
+            return _routerObj.isGroupAddressInFilterTable(address);
+        else
+            // all are ACKED
+            return true;
     }
     else
     {
-        return _netLayer.isRoutedIndividualAddress(address);
+        if(lcconfig & LCCONFIG::PHYS_IACK == LCCONFIG::PHYS_IACK_ALL)
+            return true;
+        else if(lcconfig & LCCONFIG::PHYS_IACK == LCCONFIG::PHYS_IACK_NACK)
+            return false;
+        else
+            return _netLayer.isRoutedIndividualAddress(address);
     }
 
     return false;

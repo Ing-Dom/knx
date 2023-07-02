@@ -123,7 +123,7 @@ void DataLinkLayer::frameReceived(CemiFrame& frame)
     }
 }
 
-bool DataLinkLayer::sendTelegram(NPDU & npdu, AckType ack, uint16_t destinationAddr, AddressType addrType, uint16_t sourceAddr, FrameFormat format, Priority priority, SystemBroadcast systemBroadcast)
+bool DataLinkLayer::sendTelegram(NPDU & npdu, AckType ack, uint16_t destinationAddr, AddressType addrType, uint16_t sourceAddr, FrameFormat format, Priority priority, SystemBroadcast systemBroadcast, bool doNotRepeat)
 {
     CemiFrame& frame = npdu.frame();
     // print("Send telegram frame valid ?: ");
@@ -133,7 +133,7 @@ bool DataLinkLayer::sendTelegram(NPDU & npdu, AckType ack, uint16_t destinationA
     frame.sourceAddress(sourceAddr);
     frame.addressType(addrType);
     frame.priority(priority);
-    frame.repetition(RepetitionAllowed);
+    frame.repetition(doNotRepeat?NoRepitiion:RepetitionAllowed);
     frame.systemBroadcast(systemBroadcast);
 
     if (npdu.octetCount() <= 15)
