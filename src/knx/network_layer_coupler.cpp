@@ -184,17 +184,31 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
 {
     uint8_t interfaceIndex = (sourceInterfaceIndex == kSecondaryIfIndex) ? kPrimaryIfIndex : kSecondaryIfIndex;
 
+    uint8_t lcconfig = LCCONFIG::PHYS_FRAME_ROUT | LCCONFIG::PHYS_REPEAT | LCCONFIG::BROADCAST_REPEAT | LCCONFIG::GROUP_IACK_ROUT | LCCONFIG::PHYS_IACK_NORMAL; // default value from spec. in case prop is not availible.
+    uint8_t lcgrpconfig = LCGRPCONFIG::GROUP_6FFFROUTE | LCGRPCONFIG::GROUP_7000UNLOCK | LCGRPCONFIG::GROUP_REPEAT; // default value from spec. in case prop is not availible.
+    Property* prop_lcgrpconfig;
+    Property* prop_lcconfig;
+
+    if(sourceInterfaceIndex == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
+    {
+        prop_lcgrpconfig = _rtObjPrimary->property(PID_MAIN_LCGRPCONFIG);
+        prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
+    }
+    else // direction Sec -> Prim ( e.g. TP -> IP)
+    {
+        prop_lcgrpconfig = _rtObjPrimary->property(PID_SUB_LCGRPCONFIG);
+        prop_lcconfig = _rtObjPrimary->property(PID_SUB_LCCONFIG);
+    }
+    if(prop_lcgrpconfig)
+        prop_lcgrpconfig->read(lcgrpconfig);
+
+    if(prop_lcconfig)
+        prop_lcconfig->read(lcconfig);
+    
+    
+
     if(addrType == AddressType::GroupAddress)
     {
-        uint8_t lcgrpconfig = 0;
-        Property* prop_lcgrpconfig;
-        if(sourceInterfaceIndex == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
-            prop_lcgrpconfig = _rtObjPrimary->property(PID_MAIN_LCGRPCONFIG);
-        else // direction Sec -> Prim ( e.g. TP -> IP)
-            prop_lcgrpconfig = _rtObjPrimary->property(PID_SUB_LCGRPCONFIG);
-        if(prop_lcgrpconfig)
-            prop_lcgrpconfig->read(lcgrpconfig);
-
         if(destination < 0x7000) // Main group 0-13
         {
             // PID_SUB_LCGRPCONFIG Bit 0-1
@@ -284,8 +298,14 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
     npdu.frame().apdu().printPDU();
 #endif
 
-    //PROPTODO evaluiate PHYS_REPEAT, BROADCAST_REPEAT and GROUP_REPEAT
-    _netLayerEntities[interfaceIndex].sendDataRequest(npdu, ack, destination, source, priority, addrType, broadcastType);
+    //evaluiate PHYS_REPEAT, BROADCAST_REPEAT and GROUP_REPEAT
+    bool doNotRepeat = false;
+    if((addrType == AddressType::GroupAddress && !(lcgrpconfig & LCGRPCONFIG::GROUP_REPEAT)) ||
+       (addrType == AddressType::IndividualAddress && !(lcconfig & LCCONFIG::PHYS_REPEAT)) ||
+       (addrType == AddressType::GroupAddress && destination == 0 && !(lcconfig & LCCONFIG::BROADCAST_REPEAT)))
+        doNotRepeat = true;
+    
+    _netLayerEntities[interfaceIndex].sendDataRequest(npdu, ack, destination, source, priority, addrType, broadcastType, doNotRepeat);
 }
 
 // TODO: for later: improve by putting routing algorithms in its own class/functions and only instantiate required algorithm (line vs. coupler)
@@ -312,7 +332,7 @@ void NetworkLayerCoupler::routeDataIndividual(AckType ack, uint16_t destination,
         return;
     }
 
-    uint8_t lcconfig = 0;
+    uint8_t lcconfig = LCCONFIG::PHYS_FRAME_ROUT | LCCONFIG::PHYS_REPEAT | LCCONFIG::BROADCAST_REPEAT | LCCONFIG::GROUP_IACK_ROUT | LCCONFIG::PHYS_IACK_NORMAL; // default value from spec. in case prop is not availible.
     Property* prop_lcconfig;
     if(srcIfIndex == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
         prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
@@ -401,7 +421,7 @@ void NetworkLayerCoupler::broadcastIndication(AckType ack, FrameFormat format, N
         _transportLayer.dataBroadcastIndication(hopType, priority, source, npdu.tpdu());
     }
 
-    uint8_t lcconfig = 0;
+    uint8_t lcconfig = LCCONFIG::PHYS_FRAME_ROUT | LCCONFIG::PHYS_REPEAT | LCCONFIG::BROADCAST_REPEAT | LCCONFIG::GROUP_IACK_ROUT | LCCONFIG::PHYS_IACK_NORMAL; // default value from spec. in case prop is not availible.
     Property* prop_lcconfig;
     if(srcIfIdx == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
         prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
@@ -435,7 +455,7 @@ void NetworkLayerCoupler::systemBroadcastIndication(AckType ack, FrameFormat for
         _transportLayer.dataSystemBroadcastIndication(hopType, priority, source, npdu.tpdu());
     }
     
-        uint8_t lcconfig = 0;
+    uint8_t lcconfig = LCCONFIG::PHYS_FRAME_ROUT | LCCONFIG::PHYS_REPEAT | LCCONFIG::BROADCAST_REPEAT | LCCONFIG::GROUP_IACK_ROUT | LCCONFIG::PHYS_IACK_NORMAL; // default value from spec. in case prop is not availible.
     Property* prop_lcconfig;
     if(srcIfIdx == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
         prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);

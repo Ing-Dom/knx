@@ -146,15 +146,8 @@ void Bau091A::enabled(bool value)
     _dlLayerPrimary.enabled(value);
     _dlLayerSecondary.enabled(value);
 
-    //PROPTODO
-    // Property* prop_lccconfig = _routerObj.property(PID_SUB_LCCONFIG);
-    // if(prop_lccconfig)
-    // {
-    //     if()
-    //     {
-    //         _dlLayerSecondary.setFrameRepetition(3,3);
-    //     }
-    // }
+    // ToDo change frame repitition in the TP layer - but default is ok.
+    //_dlLayerSecondary.setFrameRepetition(3,3);
 }
 
 void Bau091A::loop()
@@ -169,7 +162,7 @@ TPAckType Bau091A::isAckRequired(uint16_t address, bool isGrpAddr)
     //only called from TpUartDataLinkLayer
     TPAckType ack = TPAckType::AckReqNone;
 
-    uint8_t lcconfig = LCCONFIG::GROUP_IACK_ROUT | LCCONFIG::PHYS_IACK_NORMAL; // default value
+    uint8_t lcconfig = LCCONFIG::PHYS_FRAME_ROUT | LCCONFIG::PHYS_REPEAT | LCCONFIG::BROADCAST_REPEAT | LCCONFIG::GROUP_IACK_ROUT | LCCONFIG::PHYS_IACK_NORMAL; // default value from spec. in case prop is not availible.
     Property* prop_lcconfig = _routerObj.property(PID_SUB_LCCONFIG);
     if(lcconfig)
         prop_lcconfig->read(lcconfig);
