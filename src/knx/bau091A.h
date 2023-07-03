@@ -23,7 +23,7 @@ class Bau091A : public BauSystemBCoupler, public ITpUartCallBacks
     InterfaceObject* getInterfaceObject(ObjectType objectType, uint8_t objectInstance);
 
     // For TP1 only
-    bool isAckRequired(uint16_t address, bool isGrpAddr) override;
+    TPAckType isAckRequired(uint16_t address, bool isGrpAddr) override;
 
     void doMasterReset(EraseCode eraseCode, uint8_t channel) override;
   private:

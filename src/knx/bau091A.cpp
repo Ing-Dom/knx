@@ -164,9 +164,10 @@ void Bau091A::loop()
     BauSystemBCoupler::loop();
 }
 
-bool Bau091A::isAckRequired(uint16_t address, bool isGrpAddr)
+TPAckType Bau091A::isAckRequired(uint16_t address, bool isGrpAddr)
 {
     //only called from TpUartDataLinkLayer
+    TPAckType ack = TPAckType::AckReqNone;
 
     uint8_t lcconfig = LCCONFIG::GROUP_IACK_ROUT | LCCONFIG::PHYS_IACK_NORMAL; // default value
     Property* prop_lcconfig = _routerObj.property(PID_SUB_LCCONFIG);
@@ -177,26 +178,32 @@ bool Bau091A::isAckRequired(uint16_t address, bool isGrpAddr)
     {
         // ACK for broadcasts
         if (address == 0)
-            return true;
+            ack = TPAckType::AckReqAck;
 
         if(lcconfig & LCCONFIG::GROUP_IACK_ROUT)
-            // is group address in filter table? ACK if yes.
-            return _routerObj.isGroupAddressInFilterTable(address);
+            // is group address in filter table? ACK if yes, No if not
+            if(_routerObj.isGroupAddressInFilterTable(address))
+                ack = TPAckType::AckReqAck;
+            else
+                ack = TPAckType::AckReqNone;
         else
             // all are ACKED
-            return true;
+            ack = TPAckType::AckReqAck;
     }
     else
     {
         if(lcconfig & LCCONFIG::PHYS_IACK == LCCONFIG::PHYS_IACK_ALL)
-            return true;
+            ack = TPAckType::AckReqAck;
         else if(lcconfig & LCCONFIG::PHYS_IACK == LCCONFIG::PHYS_IACK_NACK)
-            return false;
+            ack = TPAckType::AckReqNack;
         else
-            return _netLayer.isRoutedIndividualAddress(address);
+            if(_routerObj.isGroupAddressInFilterTable(address))
+                ack = TPAckType::AckReqAck;
+            else
+                ack = TPAckType::AckReqNone;
     }
 
-    return false;
+    return ack;
 }
 
 #endif

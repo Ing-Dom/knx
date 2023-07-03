@@ -21,7 +21,7 @@ class Bau07B0 : public BauSystemBDevice, public ITpUartCallBacks
     InterfaceObject* getInterfaceObject(ObjectType objectType, uint8_t objectInstance);
 
     // For TP1 only
-    bool isAckRequired(uint16_t address, bool isGrpAddr) override;
+    TPAckType isAckRequired(uint16_t address, bool isGrpAddr) override;
 
   private:
     TpUartDataLinkLayer _dlLayer;

@@ -315,11 +315,7 @@ void TpUartDataLinkLayer::loop()
                             //check if individual or group address
                             bool isGroupAddress = (buffer[1] & 0x80) != 0;
                             uint16_t addr = getWord(buffer + 4);
-
-                            if (_cb.isAckRequired(addr, isGroupAddress))
-                            {
-                                c |= U_ACK_REQ_ADRESSED;
-                            }
+                            c |= _cb.isAckRequired(addr, isGroupAddress);
 
                             // Hint: We can send directly here, this doesn't disturb other transmissions
                             // We don't have to update _lastByteTxTime because after U_ACK_REQ the timing is not so tight
