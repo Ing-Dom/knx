@@ -265,7 +265,7 @@ void NetworkLayerCoupler::routeDataIndividual(AckType ack, uint16_t destination,
     if(srcIfIndex == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
         prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
     else // direction Sec -> Prim ( e.g. TP -> IP)
-        prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
+        prop_lcconfig = _rtObjPrimary->property(PID_SUB_LCCONFIG);
     if(prop_lcconfig)
         prop_lcconfig->read(lcconfig);
 
@@ -413,7 +413,7 @@ void NetworkLayerCoupler::broadcastIndication(AckType ack, FrameFormat format, N
     if(srcIfIdx == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
         prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
     else // direction Sec -> Prim ( e.g. TP -> IP)
-        prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
+        prop_lcconfig = _rtObjPrimary->property(PID_SUB_LCCONFIG);
     if(prop_lcconfig)
         prop_lcconfig->read(lcconfig);
 
@@ -447,7 +447,7 @@ void NetworkLayerCoupler::systemBroadcastIndication(AckType ack, FrameFormat for
     if(srcIfIdx == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
         prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
     else // direction Sec -> Prim ( e.g. TP -> IP)
-        prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
+        prop_lcconfig = _rtObjPrimary->property(PID_SUB_LCCONFIG);
     if(prop_lcconfig)
         prop_lcconfig->read(lcconfig);
 

@@ -146,14 +146,15 @@ void Bau091A::enabled(bool value)
     _dlLayerPrimary.enabled(value);
     _dlLayerSecondary.enabled(value);
 
-    Property* prop_lccconfig = _routerObj.property(PID_SUB_LCCONFIG);
-    if(prop_lccconfig)
-    {
-        if(1)
-        {
-            _dlLayerSecondary.setFrameRepetition(3,3);
-        }
-    }
+    //PROPTODO
+    // Property* prop_lccconfig = _routerObj.property(PID_SUB_LCCONFIG);
+    // if(prop_lccconfig)
+    // {
+    //     if()
+    //     {
+    //         _dlLayerSecondary.setFrameRepetition(3,3);
+    //     }
+    // }
 }
 
 void Bau091A::loop()
