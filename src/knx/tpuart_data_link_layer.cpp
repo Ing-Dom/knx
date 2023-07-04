@@ -470,6 +470,7 @@ void TpUartDataLinkLayer::loop()
 
 bool TpUartDataLinkLayer::sendFrame(CemiFrame& frame)
 {
+    println(" to TP");
     if (!_enabled)
     {
         dataConReceived(frame, false);
