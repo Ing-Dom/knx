@@ -86,25 +86,97 @@ bool NetworkLayerCoupler::isGroupAddressInFilterTable(uint16_t groupAddress)
     }
 }
 
-bool NetworkLayerCoupler::isRoutedIndividualAddress(uint16_t individualAddress)
+bool NetworkLayerCoupler::isRoutedIndividualAddress(uint16_t individualAddress, uint8_t srcIfIndex)
 {
-    // TODO: ACKs for frames with individual addresses of the sub line (secondary I/F)
-    // Check spec. about his
-    // See PID_MAIN_LCCONFIG/PID_SUB_LCCONFIG: PHYS_IACK
-    // 0 = not used
-    // 1 = normal mode (all frames that will be routed or that are addressed to the Coupler itself will be acknowledged)
-    // 2 = all frames will be acknowledged (useful only to avoid the repetitions of misrouted frames)
-    // 3 = all frames on point-to-point connectionless – or connection-oriented communication mode shall be negatively acknowledge (NACK).
-    //     This shall serve for protection purposes. (It is useful to prevent all parameterisation in one Subnetwork; the Coupler shall be protected
-    //     too. A typical use case is the protection of a Subnetwork that is located outside a building)
+    // TODO: improve: we have to be notified about anything that might affect routing decision
+    // Ugly: we could ALWAYS evaluate coupler type for every received frame
+    if (_currentAddress != _deviceObj.individualAddress())
+    {
+        evaluateCouplerType();
+    }
 
-    // Also ACK for our own individual address
-    if (individualAddress == _deviceObj.individualAddress())
-        return true;
+    // See KNX spec.: Network Layer (03/03/03) and AN161 (Coupler model 2.0)
+    /*
+        * C  hop count value contained in the N-protocol header
+        * D  low order octet of the Destination Address, i.e. Device Address part
+        * G  Group Address
+        * SD low nibble of high order octet plus low order octet, i.e. Line Address + Device Address
+        * Z  high nibble of high order octet of the Destination Address, i.e. Area Address
+        * ZS high order octet of the Destination Address, i.e. hierarchy information part: Area Address + Line Address
+    */
+    uint16_t ownSNA = _deviceObj.individualAddress() & 0xFF00; // Own subnetwork address (area + line)
+    uint16_t ownAA = _deviceObj.individualAddress() & 0xF000;  // Own area address
+    uint16_t ZS = individualAddress & 0xFF00;                        // destination subnetwork address (area + line)
+    uint16_t Z = individualAddress & 0xF000;                         // destination area address
+    uint16_t D = individualAddress & 0x00FF;                         // destination device address (without subnetwork part)
+    uint16_t SD = individualAddress & 0x0FFF;                        // destination device address (with line part, but without area part)
 
-    // use 2 for now
-    //PROPTODO: use algo from routeIndividual ?
-    return true;
+
+
+    if (_couplerType == LineCoupler)
+    {
+        // Main line to sub line routing
+        if (srcIfIndex == kPrimaryIfIndex)
+        {
+            if (ZS != ownSNA)
+            {
+                // IGNORE_TOTALLY
+                return false;
+            }
+            return true;
+        }
+        else if (srcIfIndex == kSecondaryIfIndex) // Sub line to main line routing
+        {
+            if (ZS != ownSNA)
+            {
+                // ROUTE_XXX
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            //not from primiary not from sec if, should not happen
+            return false;
+        }
+    }
+    else if (_couplerType == BackboneCoupler)
+    {
+        // Backbone line to main line routing
+        if (srcIfIndex == kPrimaryIfIndex)
+        {
+            if (Z != ownAA)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        else  if (srcIfIndex == kSecondaryIfIndex)         // Main line to backbone line routing
+        {
+            if (Z != ownAA)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            //not from primiary not from sec if, should not happen
+            return false;
+        }
+    }
+    else
+    {
+        //unknown coupler type, should not happen
+        return false;
+    }
 }
 
 void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uint16_t destination, NPDU& npdu, Priority priority,
@@ -112,17 +184,31 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
 {
     uint8_t interfaceIndex = (sourceInterfaceIndex == kSecondaryIfIndex) ? kPrimaryIfIndex : kSecondaryIfIndex;
 
+    uint8_t lcconfig = LCCONFIG::PHYS_FRAME_ROUT | LCCONFIG::PHYS_REPEAT | LCCONFIG::BROADCAST_REPEAT | LCCONFIG::GROUP_IACK_ROUT | LCCONFIG::PHYS_IACK_NORMAL; // default value from spec. in case prop is not availible.
+    uint8_t lcgrpconfig = LCGRPCONFIG::GROUP_6FFFROUTE | LCGRPCONFIG::GROUP_7000UNLOCK | LCGRPCONFIG::GROUP_REPEAT; // default value from spec. in case prop is not availible.
+    Property* prop_lcgrpconfig;
+    Property* prop_lcconfig;
+
+    if(sourceInterfaceIndex == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
+    {
+        prop_lcgrpconfig = _rtObjPrimary->property(PID_MAIN_LCGRPCONFIG);
+        prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
+    }
+    else // direction Sec -> Prim ( e.g. TP -> IP)
+    {
+        prop_lcgrpconfig = _rtObjPrimary->property(PID_SUB_LCGRPCONFIG);
+        prop_lcconfig = _rtObjPrimary->property(PID_SUB_LCCONFIG);
+    }
+    if(prop_lcgrpconfig)
+        prop_lcgrpconfig->read(lcgrpconfig);
+
+    if(prop_lcconfig)
+        prop_lcconfig->read(lcconfig);
+    
+    
+
     if(addrType == AddressType::GroupAddress)
     {
-        uint8_t lcgrpconfig = 0;
-        Property* prop_lcgrpconfig;
-        if(sourceInterfaceIndex == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
-            prop_lcgrpconfig = _rtObjPrimary->property(PID_MAIN_LCGRPCONFIG);
-        else // direction Sec -> Prim ( e.g. TP -> IP)
-            prop_lcgrpconfig = _rtObjPrimary->property(PID_SUB_LCGRPCONFIG);
-        if(prop_lcgrpconfig)
-            prop_lcgrpconfig->read(lcgrpconfig);
-
         if(destination < 0x7000) // Main group 0-13
         {
             // PID_SUB_LCGRPCONFIG Bit 0-1
@@ -212,37 +298,20 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
     npdu.frame().apdu().printPDU();
 #endif
 
-    //PROPTODO evaluiate PHYS_REPEAT, BROADCAST_REPEAT and GROUP_REPEAT
-    _netLayerEntities[interfaceIndex].sendDataRequest(npdu, ack, destination, source, priority, addrType, broadcastType);
+    //evaluiate PHYS_REPEAT, BROADCAST_REPEAT and GROUP_REPEAT
+    bool doNotRepeat = false;
+    if((addrType == AddressType::GroupAddress && !(lcgrpconfig & LCGRPCONFIG::GROUP_REPEAT)) ||
+       (addrType == AddressType::IndividualAddress && !(lcconfig & LCCONFIG::PHYS_REPEAT)) ||
+       (addrType == AddressType::GroupAddress && destination == 0 && !(lcconfig & LCCONFIG::BROADCAST_REPEAT)))
+        doNotRepeat = true;
+    
+    _netLayerEntities[interfaceIndex].sendDataRequest(npdu, ack, destination, source, priority, addrType, broadcastType, doNotRepeat);
 }
 
 // TODO: for later: improve by putting routing algorithms in its own class/functions and only instantiate required algorithm (line vs. coupler)
 // TODO: we could also do the sanity checks here, i.e. check if sourceAddress is really coming in from correct srcIfIdx, etc. (see PID_COUPL_SERV_CONTROL: EN_SNA_INCONSISTENCY_CHECK)
 void NetworkLayerCoupler::routeDataIndividual(AckType ack, uint16_t destination, NPDU& npdu, Priority priority, uint16_t source, uint8_t srcIfIndex)
 {
-        // TODO: improve: we have to be notified about anything that might affect routing decision
-        // Ugly: we could ALWAYS evaluate coupler type for every received frame
-        if (_currentAddress != _deviceObj.individualAddress())
-        {
-            evaluateCouplerType();
-        }
-
-        // See KNX spec.: Network Layer (03/03/03) and AN161 (Coupler model 2.0)
-        /*
-            * C  hop count value contained in the N-protocol header
-            * D  low order octet of the Destination Address, i.e. Device Address part
-            * G  Group Address
-            * SD low nibble of high order octet plus low order octet, i.e. Line Address + Device Address
-            * Z  high nibble of high order octet of the Destination Address, i.e. Area Address
-            * ZS high order octet of the Destination Address, i.e. hierarchy information part: Area Address + Line Address
-        */
-        uint16_t ownSNA = _deviceObj.individualAddress() & 0xFF00; // Own subnetwork address (area + line)
-        uint16_t ownAA = _deviceObj.individualAddress() & 0xF000;  // Own area address
-        uint16_t ZS = destination & 0xFF00;                        // destination subnetwork address (area + line)
-        uint16_t Z = destination & 0xF000;                         // destination area address
-        uint16_t D = destination & 0x00FF;                         // destination device address (without subnetwork part)
-        uint16_t SD = destination & 0x0FFF;                        // destination device address (with line part, but without area part)
-
     if(destination == _deviceObj.individualAddress())
     {
         // FORWARD_LOCALLY
@@ -254,13 +323,16 @@ void NetworkLayerCoupler::routeDataIndividual(AckType ack, uint16_t destination,
     // Local to main or sub line
     if (srcIfIndex == kLocalIfIndex)
     {
+        uint16_t ownAA = _deviceObj.individualAddress() & 0xF000;  // Own area address
+        uint16_t Z = destination & 0xF000;                         // destination area address
+
         // if destination is not within our area then send via primary interface, else via secondary interface
         uint8_t destIfidx = (Z != ownAA) ? kPrimaryIfIndex : kSecondaryIfIndex;
         _netLayerEntities[destIfidx].sendDataRequest(npdu, ack, destination, source, priority, AddressType::IndividualAddress, Broadcast);
         return;
     }
 
-    uint8_t lcconfig = 0;
+    uint8_t lcconfig = LCCONFIG::PHYS_FRAME_ROUT | LCCONFIG::PHYS_REPEAT | LCCONFIG::BROADCAST_REPEAT | LCCONFIG::GROUP_IACK_ROUT | LCCONFIG::PHYS_IACK_NORMAL; // default value from spec. in case prop is not availible.
     Property* prop_lcconfig;
     if(srcIfIndex == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
         prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
@@ -282,71 +354,12 @@ void NetworkLayerCoupler::routeDataIndividual(AckType ack, uint16_t destination,
     }
     else // LCCONFIG::PHYS_FRAME_ROUTE or 0
     {
-        if (_couplerType == LineCoupler)
-        {
-            // Main line to sub line routing
-            if (srcIfIndex == kPrimaryIfIndex)
-            {
-                if (ZS != ownSNA)
-                {
-                    // IGNORE_TOTALLY
-                    return;
-                }
-
-                // ROUTE_XXX
-                sendMsgHopCount(ack, AddressType::IndividualAddress, destination, npdu, priority, Broadcast, srcIfIndex, source);
-                return;
-            }
-
-            // Sub line to main line routing
-            if (srcIfIndex == kSecondaryIfIndex)
-            {
-                if (ZS != ownSNA)
-                {
-                    // ROUTE_XXX
-                    sendMsgHopCount(ack, AddressType::IndividualAddress, destination, npdu, priority, Broadcast, srcIfIndex, source);
-                }
-                else
-                {
-                    // IGNORE_TOTALLY
-                }
-                return;
-            }
-        }
-
-        if (_couplerType == BackboneCoupler)
-        {
-            // Backbone line to main line routing
-            if (srcIfIndex == kPrimaryIfIndex)
-            {
-                if (Z != ownAA)
-                {
-                    // IGNORE_TOTALLY
-                    return;
-                }
-
-                // ROUTE_XXX
-                sendMsgHopCount(ack, AddressType::IndividualAddress, destination, npdu, priority, Broadcast, srcIfIndex, source);
-                return;
-            }
-
-            // Main line to backbone line routing
-            if (srcIfIndex == kSecondaryIfIndex)
-            {
-                if (Z != ownAA)
-                {
-                    // ROUTE_XXX
-                    sendMsgHopCount(ack, AddressType::IndividualAddress, destination, npdu, priority, Broadcast, srcIfIndex, source);
-                }
-                else
-                {
-                    // IGNORE_TOTALLY
-                }
-                return;
-            }
+        if(isRoutedIndividualAddress(destination, srcIfIndex))
+            sendMsgHopCount(ack, AddressType::IndividualAddress, destination, npdu, priority, Broadcast, srcIfIndex, source); // ROUTE_XXX
+        else
+            ; // IGNORE_TOTALLY
 
 
-        }
     }
 }
 
@@ -408,7 +421,7 @@ void NetworkLayerCoupler::broadcastIndication(AckType ack, FrameFormat format, N
         _transportLayer.dataBroadcastIndication(hopType, priority, source, npdu.tpdu());
     }
 
-    uint8_t lcconfig = 0;
+    uint8_t lcconfig = LCCONFIG::PHYS_FRAME_ROUT | LCCONFIG::PHYS_REPEAT | LCCONFIG::BROADCAST_REPEAT | LCCONFIG::GROUP_IACK_ROUT | LCCONFIG::PHYS_IACK_NORMAL; // default value from spec. in case prop is not availible.
     Property* prop_lcconfig;
     if(srcIfIdx == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
         prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);
@@ -442,7 +455,7 @@ void NetworkLayerCoupler::systemBroadcastIndication(AckType ack, FrameFormat for
         _transportLayer.dataSystemBroadcastIndication(hopType, priority, source, npdu.tpdu());
     }
     
-        uint8_t lcconfig = 0;
+    uint8_t lcconfig = LCCONFIG::PHYS_FRAME_ROUT | LCCONFIG::PHYS_REPEAT | LCCONFIG::BROADCAST_REPEAT | LCCONFIG::GROUP_IACK_ROUT | LCCONFIG::PHYS_IACK_NORMAL; // default value from spec. in case prop is not availible.
     Property* prop_lcconfig;
     if(srcIfIdx == kPrimaryIfIndex) // direction Prim -> Sec ( e.g. IP -> TP)
         prop_lcconfig = _rtObjPrimary->property(PID_MAIN_LCCONFIG);

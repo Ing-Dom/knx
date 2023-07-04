@@ -20,6 +20,15 @@ enum AckType
     AckRequested = 0x2, //!< We want a DataLinkLayer acknowledgement.
 };
 
+enum TPAckType
+{
+    // see U_ACK_REQ defines in tpuart_data_link_layer.cpp
+    AckReqNack = 0x04,
+    AckReqBusy = 0x02,
+    AckReqAck = 0x01,
+    AckReqNone = 0x0,
+};
+
 enum AddressType
 {
     IndividualAddress = 0,
