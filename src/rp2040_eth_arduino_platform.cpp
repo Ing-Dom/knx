@@ -12,6 +12,8 @@ credits to https://github.com/ecarjat
 #include "rp2040_eth_arduino_platform.h"
 
 #ifdef ARDUINO_ARCH_RP2040
+#if MASK_VERSION == 0x091A || MASK_VERSION == 0x57B0
+
 #include "knx/bits.h"
 
 
@@ -124,6 +126,7 @@ bool RP2040EthArduinoPlatform::sendBytesUniCast(uint32_t addr, uint16_t port, ui
     return true;
 }
 
+#endif
 #endif
 
 

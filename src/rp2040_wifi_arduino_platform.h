@@ -7,6 +7,7 @@
 
 
 #ifdef ARDUINO_ARCH_RP2040
+#if MASK_VERSION == 0x091A || MASK_VERSION == 0x57B0
 
 #include <WiFi.h>
 #include <WiFiUdp.h>
@@ -42,5 +43,5 @@ public:
     uint16_t _port;
 
 };
-
+#endif
 #endif

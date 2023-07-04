@@ -135,7 +135,7 @@ TPAckType Bau07B0::isAckRequired(uint16_t address, bool isGrpAddr)
         if (address == 0)
             return TPAckType::AckReqAck;
         // is group address in group address table? ACK if yes.
-        if(_addrTable.contains(address)
+        if(_addrTable.contains(address))
             return TPAckType::AckReqAck;
         else
             return TPAckType::AckReqNone;
