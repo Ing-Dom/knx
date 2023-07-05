@@ -185,9 +185,9 @@ TPAckType Bau091A::isAckRequired(uint16_t address, bool isGrpAddr)
     }
     else
     {
-        if(lcconfig & LCCONFIG::PHYS_IACK == LCCONFIG::PHYS_IACK_ALL)
+        if((lcconfig & LCCONFIG::PHYS_IACK) == LCCONFIG::PHYS_IACK_ALL)
             ack = TPAckType::AckReqAck;
-        else if(lcconfig & LCCONFIG::PHYS_IACK == LCCONFIG::PHYS_IACK_NACK)
+        else if((lcconfig & LCCONFIG::PHYS_IACK) == LCCONFIG::PHYS_IACK_NACK)
             ack = TPAckType::AckReqNack;
         else
             if(_netLayer.isRoutedIndividualAddress(address, 1) || address == _deviceObj.individualAddress()) // Also ACK for our own individual address
