@@ -312,6 +312,7 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
 // TODO: we could also do the sanity checks here, i.e. check if sourceAddress is really coming in from correct srcIfIdx, etc. (see PID_COUPL_SERV_CONTROL: EN_SNA_INCONSISTENCY_CHECK)
 void NetworkLayerCoupler::routeDataIndividual(AckType ack, uint16_t destination, NPDU& npdu, Priority priority, uint16_t source, uint8_t srcIfIndex)
 {
+    //println("NetworkLayerCoupler::routeDataIndividual");
     if(destination == _deviceObj.individualAddress())
     {
         // FORWARD_LOCALLY
@@ -368,6 +369,8 @@ void NetworkLayerCoupler::dataIndication(AckType ack, AddressType addrType, uint
     // routing for individual addresses
     if (addrType == IndividualAddress)
     {
+        //printHex("NetworkLayerCoupler::dataIndication to IA ", (uint8_t*)&destination, 2);
+        //npdu.frame().valid();
         routeDataIndividual(ack, destination, npdu, priority, source, srcIfIdx);
         return;
     }
@@ -380,7 +383,6 @@ void NetworkLayerCoupler::dataIndication(AckType ack, AddressType addrType, uint
     // ROUTE_XXX
     sendMsgHopCount(ack, addrType, destination, npdu, priority, Broadcast, srcIfIdx, source);
     return;
-
 }
 
 void NetworkLayerCoupler::dataConfirm(AckType ack, AddressType addrType, uint16_t destination, FrameFormat format, Priority priority, uint16_t source, NPDU& npdu, bool status, uint8_t srcIfIdx)

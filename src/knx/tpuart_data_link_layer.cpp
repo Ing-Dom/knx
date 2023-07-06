@@ -344,7 +344,7 @@ void TpUartDataLinkLayer::loop()
 
                     if (_RxByteCnt == buffer[6] + 7 + 2)
                     {
-                        //complete Frame received, payloadLength+1 for TCPI +1 for CRC
+                        //complete Frame received, payloadLength+1 for TCPI +1 for CRC (CRC is not added)
                         //check if crc is correct
                         if (rxByte == (uint8_t)(~_xorSum))
                         {
@@ -355,7 +355,7 @@ void TpUartDataLinkLayer::loop()
 #ifdef DBG_TRACE
                                 unsigned long runTime = millis();
 #endif
-                                frameBytesReceived(_receiveBuffer, _RxByteCnt + 2);
+                                frameBytesReceived(_receiveBuffer, _RxByteCnt + 1);
 #ifdef DBG_TRACE
                                 runTime = millis() - runTime;
                                 if (runTime > (OVERRUN_COUNT*14)/10)
@@ -470,7 +470,6 @@ void TpUartDataLinkLayer::loop()
 
 bool TpUartDataLinkLayer::sendFrame(CemiFrame& frame)
 {
-    println(" to TP");
     if (!_enabled)
     {
         dataConReceived(frame, false);

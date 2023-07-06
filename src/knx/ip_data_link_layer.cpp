@@ -25,7 +25,6 @@ IpDataLinkLayer::IpDataLinkLayer(DeviceObject& devObj, IpParameterObject& ipPara
 
 bool IpDataLinkLayer::sendFrame(CemiFrame& frame)
 {
-    println(" to IP");
     KnxIpRoutingIndication packet(frame);
     // only send 50 packet per second: see KNX 3.2.6 p.6
     if(isSendLimitReached())
