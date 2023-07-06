@@ -224,6 +224,11 @@ void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t e
     println(bitIsSet);
 #endif
 
+    // ToDo
+    // Because nvram cannot be written instantly, memory.write muste be used. Memory write writes into a page buffer, changes are not visible when accessing over data pointer until it is committed.
+    // This may lead to unwanted side effects when the same byte is modfied multiple times
+    // Solution could be to buffer the filtertable in ram for the time it is modified (Load state ?)
+
     uint16_t startOctet = startAddress / 8;
     uint8_t startBitPosition = startAddress % 8;
     uint16_t endOctet = endAddress / 8;
@@ -231,26 +236,33 @@ void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t e
 
     if (startOctet == endOctet)
     {
+        uint8_t octetData = data()[startOctet];
         for (uint8_t bitPos = startBitPosition; bitPos <= endBitPosition; bitPos++)
         {
             if (bitIsSet)
-                data()[startOctet] |= 1 << bitPos; // ToDo: nvram cannot be set this way!
+                octetData |= 1 << bitPos;
             else
-                data()[startOctet] &= ~(1 << bitPos); // ToDo: nvram cannot be set this way!
+                octetData &= ~(1 << bitPos);
+        }
+        if(octetData != data()[startOctet])
+        {
+            uint32_t relptr = _memory.toRelative(data()) + startOctet;
+            _memory.writeMemory(relptr, 1, &octetData);
         }
         return;
     }
 
     for (uint16_t i = startOctet; i <= endOctet; i++)
     {
+        uint8_t octetData = data()[i];
         if (i == startOctet)
         {
             for (uint8_t bitPos = startBitPosition; bitPos <= 7; bitPos++)
             {
                 if (bitIsSet)
-                    data()[i] |= 1 << bitPos; // ToDo: nvram cannot be set this way!
+                    octetData |= 1 << bitPos;
                 else
-                    data()[i] &= ~(1 << bitPos); // ToDo: nvram cannot be set this way!
+                    octetData &= ~(1 << bitPos);
             }
         }
         else if (i == endOctet)
@@ -258,17 +270,22 @@ void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t e
             for (uint8_t bitPos = 0; bitPos <= endBitPosition; bitPos++)
             {
                 if (bitIsSet)
-                    data()[i] |= 1 << bitPos; // ToDo: nvram cannot be set this way!
+                    octetData |= 1 << bitPos;
                 else
-                    data()[i] &= ~(1 << bitPos); // ToDo: nvram cannot be set this way!
+                    octetData &= ~(1 << bitPos);
             }
         }
         else
         {
             if (bitIsSet)
-                data()[i] = 0xFF; // ToDo: nvram cannot be set this way!
+                octetData = 0xFF;
             else
-                data()[i] = 0x00; // ToDo: nvram cannot be set this way!
+                octetData = 0x00;
+        }
+        if(octetData != data()[i])
+        {
+            uint32_t relptr = _memory.toRelative(data()) + i;
+            _memory.writeMemory(relptr, 1, &octetData);
         }
     }
 }
@@ -364,6 +381,14 @@ void RouterObject::functionRouteTableControl(bool isCommand, uint8_t* data, uint
 
     if (isCommand)
     {
+        if (loadState() != LS_LOADING)
+        {
+            println("access violation. filter table can only be modified in LS_LOADING");
+            resultData[0] = ReturnCodes::AccessReadOnly;
+            resultData[1] = srvId;
+            resultLength = 2;
+            return;
+        }
         switch(srvId)
         {
             case ClearRoutingTable:

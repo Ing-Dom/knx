@@ -17,6 +17,7 @@ class Bau091A : public BauSystemBCoupler, public ITpUartCallBacks
     void loop() override;
     bool enabled() override;
     void enabled(bool value) override;
+    bool configured() override;
 
   protected:
     InterfaceObject* getInterfaceObject(uint8_t idx);

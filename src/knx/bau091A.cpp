@@ -199,4 +199,19 @@ TPAckType Bau091A::isAckRequired(uint16_t address, bool isGrpAddr)
     return ack;
 }
 
+bool Bau091A::configured()
+{
+    // _configured is set to true initially, if the device was configured with ETS it will be set to true after restart
+    
+    if (!_configured)
+        return false;
+    
+    _configured = _routerObj.loadState() == LS_LOADED;
+#ifdef USE_DATASECURE
+    _configured &= _secIfObj.loadState() == LS_LOADED;
+#endif
+    
+    return _configured;
+}
+
 #endif
