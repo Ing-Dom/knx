@@ -224,11 +224,6 @@ void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t e
     println(bitIsSet);
 #endif
 
-    // ToDo
-    // Because nvram cannot be written instantly, memory.write muste be used. Memory write writes into a page buffer, changes are not visible when accessing over data pointer until it is committed.
-    // This may lead to unwanted side effects when the same byte is modfied multiple times
-    // Solution could be to buffer the filtertable in ram for the time it is modified (Load state ?)
-
     uint16_t startOctet = startAddress / 8;
     uint8_t startBitPosition = startAddress % 8;
     uint16_t endOctet = endAddress / 8;
