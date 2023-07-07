@@ -262,8 +262,9 @@ uint32_t Platform::readNonVolatileMemory(uint32_t relativeAddress, uint8_t* buff
                 // if not, read until the end of the buffered block and loop through while again
                 else
                 {
-                    uint8_t* start = _eraseblockBuffer + (relativeAddress - _bufferedEraseblockNumber * flashEraseBlockSize());
-                    uint32_t sizeToRead = flashEraseBlockSize() - 
+                    uint32_t offsetInBufferedBlock = relativeAddress - _bufferedEraseblockNumber * flashEraseBlockSize();
+                    uint8_t* start = _eraseblockBuffer + offsetInBufferedBlock;
+                    uint32_t sizeToRead = flashEraseBlockSize() - offsetInBufferedBlock;
                     memcpy(buffer+offset, start, sizeToRead);
                     relativeAddress += sizeToRead;
                     size -= sizeToRead;

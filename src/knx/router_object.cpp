@@ -239,6 +239,7 @@ void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t e
         uint32_t relptr = _memory.toRelative(data()) + startOctet;
         uint8_t octetData =  0; // = data()[startOctet];
         _memory.readMemory(relptr, 1, &octetData);
+
         for (uint8_t bitPos = startBitPosition; bitPos <= endBitPosition; bitPos++)
         {
             if (bitIsSet)
@@ -246,17 +247,15 @@ void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t e
             else
                 octetData &= ~(1 << bitPos);
         }
-        if(octetData != data()[startOctet])
-        {
-
-            _memory.writeMemory(relptr, 1, &octetData);
-        }
+        _memory.writeMemory(relptr, 1, &octetData);
         return;
     }
 
     for (uint16_t i = startOctet; i <= endOctet; i++)
     {
-        uint8_t octetData = data()[i];
+        uint32_t relptr = _memory.toRelative(data()) + i;
+        uint8_t octetData = 0;
+        _memory.readMemory(relptr, 1, &octetData);
         if (i == startOctet)
         {
             for (uint8_t bitPos = startBitPosition; bitPos <= 7; bitPos++)
@@ -284,11 +283,7 @@ void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t e
             else
                 octetData = 0x00;
         }
-        if(octetData != data()[i])
-        {
-            uint32_t relptr = _memory.toRelative(data()) + i;
-            _memory.writeMemory(relptr, 1, &octetData);
-        }
+        _memory.writeMemory(relptr, 1, &octetData);
     }
 }
 
