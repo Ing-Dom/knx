@@ -173,7 +173,7 @@ void Platform::commitNonVolatileMemory()
 
 uint32_t Platform::writeNonVolatileMemory(uint32_t relativeAddress, uint8_t* buffer, size_t size)
 {
-#ifdef LOG_KNX_MEM
+#ifdef KNX_LOG_MEM
     print("Platform::writeNonVolatileMemory relativeAddress ");
     print(relativeAddress);
     print(" size ");
@@ -204,6 +204,61 @@ uint32_t Platform::writeNonVolatileMemory(uint32_t relativeAddress, uint8_t* buf
     else
     {
         memcpy(getEepromBuffer(KNX_FLASH_SIZE)+relativeAddress, buffer, size);
+        return relativeAddress+size;
+    }
+}
+
+uint32_t Platform::readNonVolatileMemory(uint32_t relativeAddress, uint8_t* buffer, size_t size)
+{
+#ifdef KNX_LOG_MEM
+    print("Platform::readNonVolatileMemory relativeAddress ");
+    print(relativeAddress);
+    print(" size ");
+    println(size);
+#endif
+
+    if(_memoryType == Flash)
+    {
+
+        uint32_t offset = 0;
+        while (size > 0)
+        {
+            if(_bufferedEraseblockNumber < getEraseBlockNumberOf(relativeAddress))
+            {
+                memcpy(buffer+offset, userFlashStart()+relativeAddress, size);
+                return relativeAddress + size;
+            }
+            if(_bufferedEraseblockNumber > getEraseBlockNumberOf(relativeAddress))
+            {
+
+            }
+            else
+            {
+                // identical
+            }
+
+
+            loadEraseblockContaining(relativeAddress);
+
+            uint32_t start = _bufferedEraseblockNumber * (flashEraseBlockSize() * flashPageSize());
+            uint32_t end = start +  (flashEraseBlockSize() * flashPageSize());
+
+            uint32_t offset = relativeAddress - start;
+            uint32_t length = end - relativeAddress;
+            if(length > size)
+                length = size;
+            memcpy(_eraseblockBuffer + offset, buffer, length);
+            _bufferedEraseblockDirty = true;
+
+            relativeAddress += length;
+            buffer += length;
+            size -= length;
+        }
+        return relativeAddress;
+    }
+    else
+    {
+        memcpy(buffer, getEepromBuffer(KNX_FLASH_SIZE)+relativeAddress, size);
         return relativeAddress+size;
     }
 }

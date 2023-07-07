@@ -279,6 +279,11 @@ void Memory::writeMemory(uint32_t relativeAddress, size_t size, uint8_t* data)
     _platform.writeNonVolatileMemory(relativeAddress, data, size);
 }
 
+void Memory::readMemory(uint32_t relativeAddress, size_t size, uint8_t* data)
+{
+    _platform.readNonVolatileMemory(relativeAddress, data, size);
+}
+
 
 uint8_t* Memory::toAbsolute(uint32_t relativeAddress)
 {
