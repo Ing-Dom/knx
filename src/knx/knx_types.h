@@ -20,6 +20,15 @@ enum AckType
     AckRequested = 0x2, //!< We want a DataLinkLayer acknowledgement.
 };
 
+enum TPAckType
+{
+    // see U_ACK_REQ defines in tpuart_data_link_layer.cpp
+    AckReqNack = 0x04,
+    AckReqBusy = 0x02,
+    AckReqAck = 0x01,
+    AckReqNone = 0x0,
+};
+
 enum AddressType
 {
     IndividualAddress = 0,
@@ -249,4 +258,33 @@ enum DptMedium
     KNX_PL110 = 0x01,
     KNX_RF = 0x02,
     KNX_IP = 0x05
+};
+
+enum LCGRPCONFIG
+{
+    GROUP_6FFF =        0b00000011,
+    GROUP_7000 =        0b00001100,
+    GROUP_REPEAT =      0b00010000,
+    GROUP_6FFFUNLOCK =  0b00000001,
+    GROUP_6FFFLOCK =    0b00000010,
+    GROUP_6FFFROUTE =   0b00000011,
+    GROUP_7000UNLOCK =  0b00000100,
+    GROUP_7000LOCK =    0b00001000,
+    GROUP_7000ROUTE =   0b00001100
+};
+
+enum LCCONFIG
+{
+    PHYS_FRAME =        0b00000011,
+    PHYS_FRAME_UNLOCK = 0b00000001,
+    PHYS_FRAME_LOCK =   0b00000010,
+    PHYS_FRAME_ROUT =   0b00000011,
+    PHYS_REPEAT =       0b00000100,
+    BROADCAST_LOCK =    0b00001000,
+    BROADCAST_REPEAT =  0b00010000,
+    GROUP_IACK_ROUT =   0b00100000,
+    PHYS_IACK =         0b11000000,
+    PHYS_IACK_NORMAL =  0b01000000,
+    PHYS_IACK_ALL =     0b10000000,
+    PHYS_IACK_NACK =    0b11000000
 };

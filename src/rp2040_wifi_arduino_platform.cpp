@@ -11,7 +11,8 @@ credits to https://github.com/ecarjat
 
 #include "rp2040_wifi_arduino_platform.h"
 
-#ifdef ARDUINO_ARCH_RP2040
+#if defined(ARDUINO_ARCH_RP2040) && defined(KNX_WIFI)
+
 #include "knx/bits.h"
 
 

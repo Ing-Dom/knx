@@ -486,10 +486,12 @@ template <class P, class B> class KnxFacade : private SaveRestore
         #elif MASK_VERSION == 0x2920
             extern KnxFacade<RP2040ArduinoPlatform, Bau2920> knx;
         #elif MASK_VERSION == 0x091A
-            #ifdef RP2040WIFI
+            #if defined(KNX_ETH_GEN)
+                extern KnxFacade<RP2040EthArduinoPlatform, Bau091A> knx;
+            #elif defined(KNX_WIFI)
                 extern KnxFacade<RP2040WifiArduinoPlatform, Bau091A> knx;
             #else
-                extern KnxFacade<RP2040EthArduinoPlatform, Bau091A> knx;
+                #error "no IP stack defined (#define KNX_WIFI or KNX_ETH_GEN)"
             #endif
         #else
             #error "Mask version not supported on ARDUINO_ARCH_RP2040"

@@ -6,10 +6,15 @@
 
 
 
-#ifdef ARDUINO_ARCH_RP2040
+
+#if defined(ARDUINO_ARCH_RP2040) && defined(KNX_WIFI)
 
 #include <WiFi.h>
 #include <WiFiUdp.h>
+
+#ifdef FUCK_LDF
+#include "ldf_s_crap.h"
+#endif
 
 
 class RP2040WifiArduinoPlatform : public RP2040ArduinoPlatform

@@ -53,7 +53,7 @@ void NetworkLayerEntity::systemBroadcastConfirm(AckType ack, FrameFormat format,
     _netLayer.systemBroadcastConfirm(ack, format, priority, source, npdu, status, _entityIndex);
 }
 
-void NetworkLayerEntity::sendDataRequest(NPDU &npdu, AckType ack, uint16_t destination, uint16_t source, Priority priority, AddressType addrType, SystemBroadcast systemBroadcast)
+void NetworkLayerEntity::sendDataRequest(NPDU &npdu, AckType ack, uint16_t destination, uint16_t source, Priority priority, AddressType addrType, SystemBroadcast systemBroadcast, bool doNotRepeat)
 {
     FrameFormat frameFormat = npdu.octetCount() > 15 ? ExtendedFrame : StandardFrame;
 

@@ -34,7 +34,7 @@ class DataLinkLayer
   protected:
     void frameReceived(CemiFrame& frame);
     void dataConReceived(CemiFrame& frame, bool success);
-    bool sendTelegram(NPDU& npdu, AckType ack, uint16_t destinationAddr, AddressType addrType, uint16_t sourceAddr, FrameFormat format, Priority priority, SystemBroadcast systemBroadcast);
+    bool sendTelegram(NPDU& npdu, AckType ack, uint16_t destinationAddr, AddressType addrType, uint16_t sourceAddr, FrameFormat format, Priority priority, SystemBroadcast systemBroadcast, bool doNotRepeat = false);
     virtual bool sendFrame(CemiFrame& frame) = 0;
     uint8_t* frameData(CemiFrame& frame);
     DeviceObject& _deviceObject;

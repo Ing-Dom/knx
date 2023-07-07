@@ -368,13 +368,12 @@ bool CemiFrame::valid() const
     uint8_t addInfoLen = _data[1];
     uint8_t apduLen = _data[_data[1] + NPDU_LPDU_DIFF];
 
-    if (_length != 0 && _length != (addInfoLen + apduLen + NPDU_LPDU_DIFF + 3)) // was +2
+    if (_length != 0 && _length != (addInfoLen + apduLen + NPDU_LPDU_DIFF + 2))
     {
-        
-        // print("length issue, length: ");
-        // print(_length);
-        // print(" expected length: ");
-        // println(addInfoLen + apduLen + NPDU_LPDU_DIFF + 2);
+        print("length issue, length: ");
+        print(_length);
+        print(" expected length: ");
+        println(addInfoLen + apduLen + NPDU_LPDU_DIFF + 2);
 
         return false;
     }

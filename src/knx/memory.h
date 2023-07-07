@@ -35,7 +35,9 @@ typedef VersionCheckResult (*VersionCheckCallback)(uint16_t manufacturerId, uint
 
 class Memory
 {
-public:
+    friend class TableObject;
+
+  public:
     Memory(Platform& platform, DeviceObject& deviceObject);
     virtual ~Memory();
     void readMemory();
@@ -47,6 +49,7 @@ public:
     uint8_t* allocMemory(size_t size);
     void freeMemory(uint8_t* ptr);
     void writeMemory(uint32_t relativeAddress, size_t size, uint8_t* data);
+    void readMemory(uint32_t relativeAddress, size_t size, uint8_t* data);
     uint8_t* toAbsolute(uint32_t relativeAddress);
     uint32_t toRelative(uint8_t* absoluteAddress);
 
@@ -62,6 +65,7 @@ public:
     MemoryBlock* removeFromList(MemoryBlock* head, MemoryBlock* item);
     MemoryBlock* findBlockInList(MemoryBlock* head, uint8_t* address);
     void addNewUsedBlock(uint8_t* address, size_t size);
+
 
     void readEraseBlockToBuffer(uint32_t blockNum);
     uint8_t* eraseBlockStart(uint32_t blockNum);

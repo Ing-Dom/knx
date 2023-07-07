@@ -292,6 +292,17 @@ void BauSystemB::propertyValueReadIndication(Priority priority, HopCountType hop
 {
     uint8_t size = 0;
     uint8_t elementCount = numberOfElements;
+#ifdef LOG_KNX_PROP
+    print("propertyValueReadIndication: ObjIdx ");
+    print(objectIndex);
+    print(" propId ");
+    print(propertyId);
+    print(" num ");
+    print(numberOfElements);
+    print(" start ");
+    print(startIndex);
+#endif
+
     InterfaceObject* obj = getInterfaceObject(objectIndex);
     if (obj)
     {

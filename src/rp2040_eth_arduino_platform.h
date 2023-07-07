@@ -6,7 +6,8 @@
 
 
 
-#ifdef ARDUINO_ARCH_RP2040
+#if defined(ARDUINO_ARCH_RP2040) && defined(KNX_ETH_GEN)
+
 
 #include <SPI.h>
 
