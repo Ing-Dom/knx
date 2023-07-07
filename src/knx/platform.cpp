@@ -219,40 +219,57 @@ uint32_t Platform::readNonVolatileMemory(uint32_t relativeAddress, uint8_t* buff
 
     if(_memoryType == Flash)
     {
-
         uint32_t offset = 0;
         while (size > 0)
         {
+            // bufferd block is "left" of requested memory, read until the end and return
             if(_bufferedEraseblockNumber < getEraseBlockNumberOf(relativeAddress))
             {
                 memcpy(buffer+offset, userFlashStart()+relativeAddress, size);
                 return relativeAddress + size;
             }
-            if(_bufferedEraseblockNumber > getEraseBlockNumberOf(relativeAddress))
+            // bufferd block is "right" of requested memory, and may interfere
+            else if(_bufferedEraseblockNumber > getEraseBlockNumberOf(relativeAddress))
             {
-
+                // if the end of the requested memory is before the buffered block, read until the end and return
+                int32_t eraseblockNumberEnd = getEraseBlockNumberOf(relativeAddress+size-1);
+                if(_bufferedEraseblockNumber > eraseblockNumberEnd)
+                {
+                    memcpy(buffer+offset, userFlashStart()+relativeAddress, size);
+                    return relativeAddress + size;
+                }
+                // if not, read until the buffered block starts and loop through while again
+                else
+                {
+                    uint32_t sizeToRead = (eraseblockNumberEnd * flashEraseBlockSize()) - relativeAddress;
+                    memcpy(buffer+offset, userFlashStart()+relativeAddress, sizeToRead);
+                    relativeAddress += sizeToRead;
+                    size -= sizeToRead;
+                    offset += sizeToRead;
+                }
             }
+            // start of requested memory is within the buffered erase block
             else
             {
-                // identical
+                // if the end of the requested memory is also in the buffered block, read until the end and return
+                int32_t eraseblockNumberEnd = getEraseBlockNumberOf(relativeAddress+size-1);
+                if(_bufferedEraseblockNumber == eraseblockNumberEnd)
+                {
+                    uint8_t* start = _eraseblockBuffer + (relativeAddress - _bufferedEraseblockNumber * flashEraseBlockSize());
+                    memcpy(buffer+offset, start, size);
+                    return relativeAddress + size;
+                }
+                // if not, read until the end of the buffered block and loop through while again
+                else
+                {
+                    uint8_t* start = _eraseblockBuffer + (relativeAddress - _bufferedEraseblockNumber * flashEraseBlockSize());
+                    uint32_t sizeToRead = flashEraseBlockSize() - 
+                    memcpy(buffer+offset, start, sizeToRead);
+                    relativeAddress += sizeToRead;
+                    size -= sizeToRead;
+                    offset += sizeToRead;
+                }
             }
-
-
-            loadEraseblockContaining(relativeAddress);
-
-            uint32_t start = _bufferedEraseblockNumber * (flashEraseBlockSize() * flashPageSize());
-            uint32_t end = start +  (flashEraseBlockSize() * flashPageSize());
-
-            uint32_t offset = relativeAddress - start;
-            uint32_t length = end - relativeAddress;
-            if(length > size)
-                length = size;
-            memcpy(_eraseblockBuffer + offset, buffer, length);
-            _bufferedEraseblockDirty = true;
-
-            relativeAddress += length;
-            buffer += length;
-            size -= length;
         }
         return relativeAddress;
     }

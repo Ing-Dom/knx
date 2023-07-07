@@ -236,7 +236,9 @@ void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t e
 
     if (startOctet == endOctet)
     {
-        uint8_t octetData = data()[startOctet];
+        uint32_t relptr = _memory.toRelative(data()) + startOctet;
+        uint8_t octetData =  0; // = data()[startOctet];
+        _memory.readMemory(relptr, 1, &octetData);
         for (uint8_t bitPos = startBitPosition; bitPos <= endBitPosition; bitPos++)
         {
             if (bitIsSet)
@@ -246,7 +248,7 @@ void RouterObject::commandClearSetGroupAddress(uint16_t startAddress, uint16_t e
         }
         if(octetData != data()[startOctet])
         {
-            uint32_t relptr = _memory.toRelative(data()) + startOctet;
+
             _memory.writeMemory(relptr, 1, &octetData);
         }
         return;
