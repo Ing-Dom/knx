@@ -11,8 +11,6 @@ using namespace std;
 /* ToDos
 Announce the line status of sec side 03_05_01 4.4.3
 implement PID_COUPLER_SERVICES_CONTROL 03_05_01 4.4.7
-
-set the repetition of tp frames according LCCConfig with U_SetRepetition.req in TPUartDataLinkLayer
 */
 
 Bau091A::Bau091A(Platform& platform)

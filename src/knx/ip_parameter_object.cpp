@@ -34,6 +34,7 @@ IpParameterObject::IpParameterObject(DeviceObject& deviceObject, Platform& platf
                 io->_deviceObject.individualAddress(getWord(data));
                 return 1; 
             }),
+        new DataProperty(PID_CURRENT_IP_ASSIGNMENT_METHOD, false, PDT_UNSIGNED_CHAR, 0, ReadLv3 | WriteLv3),
         new DataProperty(PID_IP_ASSIGNMENT_METHOD, true, PDT_UNSIGNED_CHAR, 1, ReadLv3 | WriteLv3),
         new DataProperty(PID_IP_CAPABILITIES, true, PDT_BITSET8, 1, ReadLv3 | WriteLv1),
         new CallbackProperty<IpParameterObject>(this, PID_CURRENT_IP_ADDRESS, false, PDT_UNSIGNED_LONG, 1, ReadLv3 | WriteLv0,

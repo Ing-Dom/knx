@@ -70,6 +70,7 @@ void RP2040EthArduinoPlatform::closeMultiCast()
 bool RP2040EthArduinoPlatform::sendBytesMultiCast(uint8_t* buffer, uint16_t len)
 {
     //printHex("<- ",buffer, len);
+    //ToDo: check if Ethernet is able to receive
     _udp.beginPacket(mcastaddr, _port);
     _udp.write(buffer, len);
     _udp.endPacket();
