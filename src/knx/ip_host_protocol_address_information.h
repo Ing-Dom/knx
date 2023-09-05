@@ -12,7 +12,6 @@ enum HostProtocolCode : uint8_t
 #ifdef USE_IP
 
 #define LEN_IPHPAI 8
-#define LEN_CRD 4
 
 class IpHostProtocolAddressInformation
 {

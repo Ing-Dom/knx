@@ -9,10 +9,6 @@
 #include "knx_ip_routing_indication.h"
 #include "knx_ip_search_request.h"
 #include "knx_ip_search_response.h"
-#ifdef KNX_TUNNELING
-#include "knx_ip_connect_request.h"
-#include "knx_ip_connect_response.h"
-#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -67,7 +63,6 @@ void IpDataLinkLayer::loop()
         }
         case SearchRequest:
         {
-            println("Got SearchResponse");
             KnxIpSearchRequest searchRequest(buffer, len);
             KnxIpSearchResponse searchResponse(_ipParameters, _deviceObject);
 
@@ -80,74 +75,6 @@ void IpDataLinkLayer::loop()
             // FIXME, implement (not needed atm)
             break;
         }
-#ifdef KNX_TUNNELING
-        case ConnectRequest:
-        {
-            KnxIpConnectRequest connRequest(buffer, len);
-            println("Got Tunneling Connect Request!");
-            print("Data Endpoint: ");
-            uint32_t ip = connRequest.hpaiData().ipAddress();
-            print(ip >> 24);
-            print(".");
-            print((ip >> 16) & 0xFF);
-            print(".");
-            print((ip >> 8) & 0xFF);
-            print(".");
-            print(ip & 0xFF);
-            print(":");
-            println(connRequest.hpaiData().ipPortNumber());
-            print("Ctrl Endpoint: ");
-            ip = connRequest.hpaiCtrl().ipAddress();
-            print(ip >> 24);
-            print(".");
-            print((ip >> 16) & 0xFF);
-            print(".");
-            print((ip >> 8) & 0xFF);
-            print(".");
-            print(ip & 0xFF);
-            print(":");
-            println(connRequest.hpaiCtrl().ipPortNumber());
-
-            KnxIpTunnelConnection *tun = nullptr;
-            for(int i = 0; i < KNX_TUNNELING; i++)
-            {
-                if(tunnels[i].ChannelId == 0)
-                {
-                    tun = &tunnels[i];
-                    break;
-                }
-            }
-
-            if(tun != nullptr)
-            {
-                print("Neuer Tunnel: 0x");
-                tun->ChannelId = _lastChannelId++;
-                if(_lastChannelId == 0)
-                    _lastChannelId++;
-
-                print(tun->ChannelId, 16);
-                print("/");
-                print(tun->IndividualAddress >> 12);
-                print(".");
-                print((tun->IndividualAddress >> 8) & 0xF);
-                print(".");
-                println(tun->IndividualAddress & 0xFF);
-
-                KnxIpConnectResponse connRes(_ipParameters, _deviceObject, 12345, tun->ChannelId);
-
-                _platform.sendBytesUniCast(connRequest.hpaiData().ipAddress(), connRequest.hpaiData().ipPortNumber(), connRes.data(), connRes.totalLength());
-            } else {
-                //TODO send No Free Slot
-                println("Kein freier Tunnel verfügbar");
-
-                KnxIpConnectResponse connRes(0x00, E_NO_MORE_CONNECTIONS);
-                
-                _platform.sendBytesUniCast(connRequest.hpaiData().ipAddress(), connRequest.hpaiData().ipPortNumber(), connRes.data(), connRes.totalLength());
-            }
-
-            break;
-        }
-#endif
         default:
 #ifdef KNX_LOG_IP
             print("Unhandled service identifier: ");
@@ -164,20 +91,6 @@ void IpDataLinkLayer::enabled(bool value)
     if (value && !_enabled)
     {
         _platform.setupMultiCast(_ipParameters.propertyValue<uint32_t>(PID_ROUTING_MULTICAST_ADDRESS), KNXIP_MULTICAST_PORT);
-#ifdef KNX_TUNNELING
-        uint16_t addr = _ipParameters.propertyValue<uint16_t>(PID_KNX_INDIVIDUAL_ADDRESS);
-        print("Addr: ");
-        println(addr);
-        for(int i = 0; i < KNX_TUNNELING; i++)
-        {
-            if((addr & 0xFF) == 255)
-            {
-                println("Es sind keine Adressen mehr frei für einen Tunnel!");
-                break;
-            }
-            tunnels[i].IndividualAddress = ++addr;
-        }
-#endif
         _enabled = true;
         return;
     }

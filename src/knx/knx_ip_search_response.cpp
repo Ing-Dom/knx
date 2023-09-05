@@ -3,17 +3,9 @@
 
 #define LEN_SERVICE_FAMILIES 2
 #if MASK_VERSION == 0x091A
-#ifdef KNX_TUNNELING
-#define LEN_SERVICE_DIB (2 + 4 * LEN_SERVICE_FAMILIES)
-#else
-#define LEN_SERVICE_DIB (2 + 3 * LEN_SERVICE_FAMILIES)
-#endif
-#else
-#ifdef KNX_TUNNELING
 #define LEN_SERVICE_DIB (2 + 3 * LEN_SERVICE_FAMILIES)
 #else
 #define LEN_SERVICE_DIB (2 + 2 * LEN_SERVICE_FAMILIES)
-#endif
 #endif
 
 KnxIpSearchResponse::KnxIpSearchResponse(IpParameterObject& parameters, DeviceObject& deviceObject)
@@ -52,9 +44,6 @@ KnxIpSearchResponse::KnxIpSearchResponse(IpParameterObject& parameters, DeviceOb
     _supportedServices.code(SUPP_SVC_FAMILIES);
     _supportedServices.serviceVersion(Core, 1);
     _supportedServices.serviceVersion(DeviceManagement, 1);
-#ifdef KNX_TUNNELING
-    _supportedServices.serviceVersion(Tunnelling, 1);
-#endif
 #if MASK_VERSION == 0x091A
     _supportedServices.serviceVersion(Routing, 1);
 #endif

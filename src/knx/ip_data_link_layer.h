@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include "data_link_layer.h"
 #include "ip_parameter_object.h"
-#include "knx_ip_tunnel_connection.h"
 
 class IpDataLinkLayer : public DataLinkLayer
 {
@@ -31,10 +30,5 @@ class IpDataLinkLayer : public DataLinkLayer
     bool isSendLimitReached();
 
     IpParameterObject& _ipParameters;
-
-#ifdef KNX_TUNNELING
-    KnxIpTunnelConnection tunnels[KNX_TUNNELING];
-    uint8_t _lastChannelId = 1;
-#endif
 };
 #endif
