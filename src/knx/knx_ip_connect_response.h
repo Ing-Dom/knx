@@ -16,7 +16,7 @@ enum KnxIpConnectionRequestErrorCodes
 class KnxIpConnectResponse : public KnxIpFrame
 {
   public:
-    KnxIpConnectResponse(IpParameterObject& parameters, DeviceObject& deviceObject, uint16_t port, uint8_t channel);
+    KnxIpConnectResponse(IpParameterObject& parameters, uint16_t address, uint16_t port, uint8_t channel);
     KnxIpConnectResponse(uint8_t channel, uint8_t errorCode);
     IpHostProtocolAddressInformation& controlEndpoint();
   private:

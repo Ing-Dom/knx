@@ -133,16 +133,20 @@ void IpDataLinkLayer::loop()
                 print(".");
                 println(tun->IndividualAddress & 0xFF);
 
-                KnxIpConnectResponse connRes(_ipParameters, _deviceObject, 12345, tun->ChannelId);
+                tun->IpAddress = connRequest.hpaiData().ipAddress();
+                tun->PortData = connRequest.hpaiData().ipPortNumber();
+                tun->PortCtrl = connRequest.hpaiCtrl().ipPortNumber();
 
-                _platform.sendBytesUniCast(connRequest.hpaiData().ipAddress(), connRequest.hpaiData().ipPortNumber(), connRes.data(), connRes.totalLength());
+                KnxIpConnectResponse connRes(_ipParameters, tun->IndividualAddress, 3671, tun->ChannelId);
+
+                _platform.sendBytesUniCast(tun->IpAddress, tun->PortCtrl, connRes.data(), connRes.totalLength());
             } else {
                 //TODO send No Free Slot
                 println("Kein freier Tunnel verfügbar");
 
                 KnxIpConnectResponse connRes(0x00, E_NO_MORE_CONNECTIONS);
                 
-                _platform.sendBytesUniCast(connRequest.hpaiData().ipAddress(), connRequest.hpaiData().ipPortNumber(), connRes.data(), connRes.totalLength());
+                _platform.sendBytesUniCast(connRequest.hpaiCtrl().ipAddress(), connRequest.hpaiCtrl().ipPortNumber(), connRes.data(), connRes.totalLength());
             }
 
             break;
