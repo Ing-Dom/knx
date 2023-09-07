@@ -16,12 +16,12 @@ void KnxIpCRD::length(uint8_t value)
     *_data = value;
 }
 
-ConnectionType KnxIpCRD::type() const
+uint8_t KnxIpCRD::type() const
 {
-    return (ConnectionType)_data[1];
+    return _data[1];
 }
 
-void KnxIpCRD::type(ConnectionType value)
+void KnxIpCRD::type(uint8_t value)
 {
     _data[1] = value;
 }

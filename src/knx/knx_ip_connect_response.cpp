@@ -1,7 +1,7 @@
 #include "knx_ip_connect_response.h"
 #ifdef USE_IP
 
-KnxIpConnectResponse::KnxIpConnectResponse(IpParameterObject& parameters, uint16_t address, uint16_t port, uint8_t channel)
+KnxIpConnectResponse::KnxIpConnectResponse(IpParameterObject& parameters, uint16_t address, uint16_t port, uint8_t channel, uint8_t type)
     : KnxIpFrame(LEN_KNXIP_HEADER + 1 /*Channel*/ + 1 /*Status*/ + LEN_IPHPAI + LEN_CRD),
       _controlEndpoint(_data + LEN_KNXIP_HEADER + 1 /*Channel*/ + 1 /*Status*/),
       _crd(_data + LEN_KNXIP_HEADER + 1 /*Channel*/ + 1 /*Status*/ + LEN_IPHPAI)
@@ -16,7 +16,7 @@ KnxIpConnectResponse::KnxIpConnectResponse(IpParameterObject& parameters, uint16
     _controlEndpoint.ipPortNumber(KNXIP_MULTICAST_PORT);
 
     _crd.length(4);
-    _crd.type(Tunneling);
+    _crd.type(type);
     _crd.address(address);
 }
 

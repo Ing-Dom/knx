@@ -10,6 +10,9 @@ class KnxIpTunnelConnection
     uint32_t IpAddress = 0;
     uint16_t PortData = 0;
     uint16_t PortCtrl = 0;
+    unsigned long lastHeartbeat = 0;
+
+    void Reset();
 
   private:
 

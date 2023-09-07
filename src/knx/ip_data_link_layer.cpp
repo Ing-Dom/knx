@@ -12,6 +12,10 @@
 #ifdef KNX_TUNNELING
 #include "knx_ip_connect_request.h"
 #include "knx_ip_connect_response.h"
+#include "knx_ip_state_request.h"
+#include "knx_ip_state_response.h"
+#include "knx_ip_disconnect_request.h"
+#include "knx_ip_disconnect_response.h"
 #endif
 
 #include <stdio.h>
@@ -84,7 +88,52 @@ void IpDataLinkLayer::loop()
         case ConnectRequest:
         {
             KnxIpConnectRequest connRequest(buffer, len);
-            println("Got Tunneling Connect Request!");
+    #ifdef KNX_LOG_IP
+            println("Got Connect Request!");
+            switch(connRequest.cri().type())
+            {
+                case DEVICE_MGMT_CONNECTION:
+                    println("Device Management Connection");
+                    break;
+                case TUNNEL_CONNECTION:
+                    println("Tunnel Connection");
+                    break;
+                case REMLOG_CONNECTION:
+                    println("RemLog Connection");
+                    break;
+                case REMCONF_CONNECTION:
+                    println("RemConf Connection");
+                    break;
+                case OBJSVR_CONNECTION:
+                    println("ObjectServer Connection");
+                    break;
+            }
+    #endif
+
+
+            if(connRequest.cri().type() != TUNNEL_CONNECTION)
+            {
+                //We only support 0x04!
+    #ifdef KNX_LOG_IP
+            println("Only Tunnel Connection ist supported!");
+    #endif
+                KnxIpConnectResponse connRes(0x00, E_CONNECTION_TYPE);
+                _platform.sendBytesUniCast(connRequest.hpaiCtrl().ipAddress(), connRequest.hpaiCtrl().ipPortNumber(), connRes.data(), connRes.totalLength());
+                return;
+            }
+
+            if(connRequest.cri().layer() != 0x02) //LinkLayer
+            {
+                //We only support 0x02!
+    #ifdef KNX_LOG_IP
+            println("Only LinkLayer ist supported!");
+    #endif
+                KnxIpConnectResponse connRes(0x00, E_TUNNELING_LAYER);
+                _platform.sendBytesUniCast(connRequest.hpaiCtrl().ipAddress(), connRequest.hpaiCtrl().ipPortNumber(), connRes.data(), connRes.totalLength());
+                return;
+            }
+
+    #ifdef KNX_LOG_IP
             print("Data Endpoint: ");
             uint32_t ip = connRequest.hpaiData().ipAddress();
             print(ip >> 24);
@@ -107,6 +156,7 @@ void IpDataLinkLayer::loop()
             print(ip & 0xFF);
             print(":");
             println(connRequest.hpaiCtrl().ipPortNumber());
+    #endif
 
             KnxIpTunnelConnection *tun = nullptr;
             for(int i = 0; i < KNX_TUNNELING; i++)
@@ -118,38 +168,106 @@ void IpDataLinkLayer::loop()
                 }
             }
 
-            if(tun != nullptr)
+            if(tun == nullptr)
             {
-                print("Neuer Tunnel: 0x");
-                tun->ChannelId = _lastChannelId++;
-                if(_lastChannelId == 0)
-                    _lastChannelId++;
-
-                print(tun->ChannelId, 16);
-                print("/");
-                print(tun->IndividualAddress >> 12);
-                print(".");
-                print((tun->IndividualAddress >> 8) & 0xF);
-                print(".");
-                println(tun->IndividualAddress & 0xFF);
-
-                tun->IpAddress = connRequest.hpaiData().ipAddress();
-                tun->PortData = connRequest.hpaiData().ipPortNumber();
-                tun->PortCtrl = connRequest.hpaiCtrl().ipPortNumber();
-
-                KnxIpConnectResponse connRes(_ipParameters, tun->IndividualAddress, 3671, tun->ChannelId);
-
-                _platform.sendBytesUniCast(tun->IpAddress, tun->PortCtrl, connRes.data(), connRes.totalLength());
-            } else {
-                //TODO send No Free Slot
+    #ifdef KNX_LOG_IP
                 println("Kein freier Tunnel verfügbar");
-
+    #endif
                 KnxIpConnectResponse connRes(0x00, E_NO_MORE_CONNECTIONS);
-                
                 _platform.sendBytesUniCast(connRequest.hpaiCtrl().ipAddress(), connRequest.hpaiCtrl().ipPortNumber(), connRes.data(), connRes.totalLength());
+                return;
             }
 
+            tun->ChannelId = _lastChannelId++;
+            if(_lastChannelId == 0)
+                _lastChannelId++;
+
+    #ifdef KNX_LOG_IP
+            print("Neuer Tunnel: 0x");
+            print(tun->ChannelId, 16);
+            print("/");
+            print(tun->IndividualAddress >> 12);
+            print(".");
+            print((tun->IndividualAddress >> 8) & 0xF);
+            print(".");
+            println(tun->IndividualAddress & 0xFF);
+    #endif
+
+            tun->IpAddress = connRequest.hpaiData().ipAddress();
+            tun->PortData = connRequest.hpaiData().ipPortNumber();
+            tun->PortCtrl = connRequest.hpaiCtrl().ipPortNumber();
+
+            KnxIpConnectResponse connRes(_ipParameters, tun->IndividualAddress, 3671, tun->ChannelId, connRequest.cri().type());
+
+            _platform.sendBytesUniCast(tun->IpAddress, tun->PortCtrl, connRes.data(), connRes.totalLength());
             break;
+        }
+
+        case ConnectionStateRequest:
+        {
+            KnxIpStateRequest stateRequest(buffer, len);
+
+            
+            KnxIpTunnelConnection *tun = nullptr;
+            for(int i = 0; i < KNX_TUNNELING; i++)
+            {
+                if(tunnels[i].ChannelId == stateRequest.channelId())
+                {
+                    tun = &tunnels[i];
+                    break;
+                }
+            }
+
+            if(tun == nullptr)
+            {
+    #ifdef KNX_LOG_IP
+                println("Channel ID nicht gefunden");
+    #endif
+                KnxIpStateResponse stateRes(0x00, E_CONNECTION_ID);
+                _platform.sendBytesUniCast(stateRequest.hpaiCtrl().ipAddress(), stateRequest.hpaiCtrl().ipPortNumber(), stateRes.data(), stateRes.totalLength());
+                return;
+            }
+
+            //TODO check knx connection!
+            //if no connection return E_KNX_CONNECTION
+
+            //TODO check when to send E_DATA_CONNECTION
+
+            tun->lastHeartbeat = millis();
+            KnxIpStateResponse stateRes(tun->ChannelId, E_NO_ERROR);
+            _platform.sendBytesUniCast(stateRequest.hpaiCtrl().ipAddress(), stateRequest.hpaiCtrl().ipPortNumber(), stateRes.data(), stateRes.totalLength());
+            break;
+        }
+
+        case DisconnectRequest:
+        {
+            KnxIpDisconnectRequest discReq(buffer, len);
+            
+            KnxIpTunnelConnection *tun = nullptr;
+            for(int i = 0; i < KNX_TUNNELING; i++)
+            {
+                if(tunnels[i].ChannelId == discReq.channelId())
+                {
+                    tun = &tunnels[i];
+                    break;
+                }
+            }
+
+            if(tun == nullptr)
+            {
+    #ifdef KNX_LOG_IP
+                println("Channel ID nicht gefunden");
+    #endif
+                KnxIpDisconnectResponse discRes(0x00, E_CONNECTION_ID);
+                _platform.sendBytesUniCast(discReq.hpaiCtrl().ipAddress(), discReq.hpaiCtrl().ipPortNumber(), discRes.data(), discRes.totalLength());
+                return;
+            }
+
+
+            KnxIpDisconnectResponse discRes(tun->ChannelId, 0x00);
+            _platform.sendBytesUniCast(discReq.hpaiCtrl().ipAddress(), discReq.hpaiCtrl().ipPortNumber(), discRes.data(), discRes.totalLength());
+            tun->Reset();
+            break;;
         }
 #endif
         default:
@@ -157,7 +275,7 @@ void IpDataLinkLayer::loop()
             print("Unhandled service identifier: ");
             println(code, HEX);
 #endif
-        ;
+            break;
     }
 }
 
