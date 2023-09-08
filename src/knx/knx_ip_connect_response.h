@@ -15,6 +15,8 @@ enum KnxIpConnectionRequestErrorCodes
   E_HOST_PROTOCOL_TYPE = 0x01,
   E_VERSION_NOT_SUPPORTED = 0x02,
   E_SEQUENCE_NUMBER = 0x04,
+
+  E_ERROR = 0x0F,
   
   E_CONNECTION_ID = 0x21,
   E_CONNECTION_TYPE = 0x22,
@@ -22,7 +24,10 @@ enum KnxIpConnectionRequestErrorCodes
   E_NO_MORE_CONNECTIONS = 0x24,
   E_DATA_CONNECTION = 0x26,
   E_KNX_CONNECTION = 0x27,
-  E_TUNNELING_LAYER = 0x29
+  E_AUTHORISATION_ERROR = 0x28,
+  E_TUNNELING_LAYER = 0x29,
+  E_NO_TUNNELLING_ADDRESS = 0x2D,
+  E_CONNECTION_IN_USE = 0x2E
 };
 
 class KnxIpConnectResponse : public KnxIpFrame

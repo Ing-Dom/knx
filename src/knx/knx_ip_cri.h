@@ -17,6 +17,7 @@ enum ConnectionType : uint8_t
   OBJSVR_CONNECTION = 8
 };
 
+// Connection Request Information
 class KnxIpCRI
 {
   public:

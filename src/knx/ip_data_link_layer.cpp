@@ -16,6 +16,8 @@
 #include "knx_ip_state_response.h"
 #include "knx_ip_disconnect_request.h"
 #include "knx_ip_disconnect_response.h"
+#include "knx_ip_tunneling_request.h"
+#include "knx_ip_tunneling_ack.h"
 #endif
 
 #include <stdio.h>
@@ -269,6 +271,63 @@ void IpDataLinkLayer::loop()
             tun->Reset();
             break;;
         }
+
+        case TunnelingRequest:
+        {
+            KnxIpTunnelingRequest tunnReq(buffer, len);
+
+            KnxIpTunnelConnection *tun = nullptr;
+            for(int i = 0; i < KNX_TUNNELING; i++)
+            {
+                if(tunnels[i].ChannelId == tunnReq.connectionHeader().channelId())
+                {
+                    tun = &tunnels[i];
+                    break;
+                }
+            }
+
+            if(tun == nullptr)
+            {
+    #ifdef KNX_LOG_IP
+                println("Channel ID nicht gefunden");
+    #endif
+                KnxIpStateResponse stateRes(0x00, E_CONNECTION_ID);
+                //TODO where to send?
+                //_platform.sendBytesUniCast(stateRequest.hpaiCtrl().ipAddress(), stateRequest.hpaiCtrl().ipPortNumber(), stateRes.data(), stateRes.totalLength());
+                return;
+            }
+
+            if(tunnReq.connectionHeader().sequenceCounter() - 1 != tun->SequenceCounter)
+            {
+    #ifdef KNX_LOG_IP
+                println("Wrong SequenceCounter: got %i expected %i", tunnReq.connectionHeader().sequenceCounter(), tun->SequenceCounter + 1);
+    #endif
+                //TODO überhaupt etwas zurück schicken?
+                KnxIpTunnelingAck tunnAck;
+                tunnAck.connectionHeader().channelId(tun->ChannelId);
+                tunnAck.connectionHeader().sequenceCounter(tunnReq.connectionHeader().sequenceCounter());
+                tunnAck.connectionHeader().status(E_ERROR);
+                _platform.sendBytesUniCast(tun->IpAddress, tun->PortData, tunnAck.data(), tunnAck.totalLength());
+                return;
+            }
+
+            tun->SequenceCounter = tunnReq.connectionHeader().sequenceCounter();
+
+            if(tunnReq.frame().sourceAddress() == 0)
+                tunnReq.frame().sourceAddress(tun->IndividualAddress);
+
+            frameReceived(tunnReq.frame());
+
+            KnxIpTunnelingAck tunnAck;
+            tunnAck.connectionHeader().channelId(tun->ChannelId);
+            tunnAck.connectionHeader().sequenceCounter(tunnReq.connectionHeader().sequenceCounter());
+            tunnAck.connectionHeader().status(E_NO_ERROR);
+            _platform.sendBytesUniCast(tun->IpAddress, tun->PortData, tunnAck.data(), tunnAck.totalLength());
+    #ifdef KNX_LOG_IP
+                println("Frame gesendet");
+    #endif
+            break;
+        }
 #endif
         default:
 #ifdef KNX_LOG_IP
@@ -287,9 +346,9 @@ void IpDataLinkLayer::enabled(bool value)
     {
         _platform.setupMultiCast(_ipParameters.propertyValue<uint32_t>(PID_ROUTING_MULTICAST_ADDRESS), KNXIP_MULTICAST_PORT);
 #ifdef KNX_TUNNELING
+//TODO USE PID 53
         uint16_t addr = _ipParameters.propertyValue<uint16_t>(PID_KNX_INDIVIDUAL_ADDRESS);
-        print("Addr: ");
-        println(addr);
+        uint8_t *addr = _ipParameters.propertyValue<uint8_t*>(PID_ADDITIONAL_INDIVIDUAL_ADDRESSES);
         for(int i = 0; i < KNX_TUNNELING; i++)
         {
             if((addr & 0xFF) == 255)
@@ -298,6 +357,15 @@ void IpDataLinkLayer::enabled(bool value)
                 break;
             }
             tunnels[i].IndividualAddress = ++addr;
+    #ifdef KNX_LOG_IP
+            print("Tunneling address: ");
+            print(tunnels[i]IndividualAddress >> 12);
+            print(".");
+            print((tunnels[i]IndividualAddress >> 8) & 0xF);
+            print(".");
+            println(tunnels[i]IndividualAddress & 0xFF);
+    #endif
+
         }
 #endif
         _enabled = true;
