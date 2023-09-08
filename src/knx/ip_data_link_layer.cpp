@@ -49,6 +49,34 @@ void IpDataLinkLayer::loop()
     if (!_enabled)
         return;
 
+#ifdef KNX_TUNNELING
+    for(int i = 0; i < KNX_TUNNELING; i++)
+    {
+        if(tunnels[i].ChannelId != 0)
+        {
+            if(millis() - 30000 > tunnels[i].lastHeartbeat)
+            {
+    #ifdef KNX_LOG_IP
+                print("Closed Tunnel ");
+                print(tunnels[i].ChannelId);
+                println(" due to no heartbeat in 30 seconds");
+    #endif
+                KnxIpDisconnectRequest discReq;
+                discReq.channelId(tunnels[i].ChannelId);
+                discReq.hpaiCtrl().length(4);
+                discReq.hpaiCtrl().code(IPV4_UDP);
+                discReq.hpaiCtrl().ipAddress(tunnels[i].IpAddress);
+                discReq.hpaiCtrl().ipPortNumber(tunnels[i].PortCtrl);
+                //TODO doesnt work
+                //will close directly in next loop!
+                //_platform.sendBytesUniCast(discReq.hpaiCtrl().ipAddress(), discReq.hpaiCtrl().ipPortNumber(), discReq.data(), discReq.totalLength());
+                //tunnels[i].Reset();
+            }
+            break;
+        }
+    }
+#endif
+
     uint8_t buffer[512];
     int len = _platform.readBytesMultiCast(buffer, 512);
     if (len <= 0)
@@ -180,6 +208,7 @@ void IpDataLinkLayer::loop()
                 return;
             }
 
+            tun->lastHeartbeat = millis();
             tun->ChannelId = _lastChannelId++;
             if(_lastChannelId == 0)
                 _lastChannelId++;
@@ -223,7 +252,8 @@ void IpDataLinkLayer::loop()
             if(tun == nullptr)
             {
     #ifdef KNX_LOG_IP
-                println("Channel ID nicht gefunden");
+                print("Channel ID nicht gefunden: ");
+                println(stateRequest.channelId());
     #endif
                 KnxIpStateResponse stateRes(0x00, E_CONNECTION_ID);
                 _platform.sendBytesUniCast(stateRequest.hpaiCtrl().ipAddress(), stateRequest.hpaiCtrl().ipPortNumber(), stateRes.data(), stateRes.totalLength());
@@ -260,7 +290,8 @@ void IpDataLinkLayer::loop()
             if(tun == nullptr)
             {
     #ifdef KNX_LOG_IP
-                println("Channel ID nicht gefunden");
+                print("Channel ID nicht gefunden: ");
+                println(discReq.channelId());
     #endif
                 KnxIpDisconnectResponse discRes(0x00, E_CONNECTION_ID);
                 _platform.sendBytesUniCast(discReq.hpaiCtrl().ipAddress(), discReq.hpaiCtrl().ipPortNumber(), discRes.data(), discRes.totalLength());
@@ -291,7 +322,8 @@ void IpDataLinkLayer::loop()
             if(tun == nullptr)
             {
     #ifdef KNX_LOG_IP
-                println("Channel ID nicht gefunden");
+                print("Channel ID nicht gefunden: ");
+                println(tunnReq.connectionHeader().channelId());
     #endif
                 KnxIpStateResponse stateRes(0x00, E_CONNECTION_ID);
                 //TODO where to send?

@@ -5,6 +5,11 @@ KnxIpDisconnectRequest::KnxIpDisconnectRequest(uint8_t* data, uint16_t length)
 {
 }
 
+KnxIpDisconnectRequest::KnxIpDisconnectRequest()
+    : KnxIpFrame( + 1 /*ChannelId*/ + 1 /*Reserved*/ + LEN_KNXIP_HEADER), _hpaiCtrl(_data + 1 /*ChannelId*/ + 1 /*Reserved*/ + LEN_KNXIP_HEADER)
+{
+}
+
 IpHostProtocolAddressInformation& KnxIpDisconnectRequest::hpaiCtrl()
 {
     return _hpaiCtrl;
@@ -12,5 +17,9 @@ IpHostProtocolAddressInformation& KnxIpDisconnectRequest::hpaiCtrl()
 uint8_t KnxIpDisconnectRequest::channelId()
 {
     return _data[LEN_KNXIP_HEADER];
+}
+void KnxIpDisconnectRequest::channelId(uint8_t channelId)
+{
+    _data[LEN_KNXIP_HEADER] = channelId;
 }
 #endif
