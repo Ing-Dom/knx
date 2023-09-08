@@ -13,4 +13,6 @@ void KnxIpTunnelConnection::Reset()
     PortData = 0;
     PortCtrl = 0;
     lastHeartbeat = 0;
+    SequenceCounter_S = 0;
+    SequenceCounter_R = 255;
 }

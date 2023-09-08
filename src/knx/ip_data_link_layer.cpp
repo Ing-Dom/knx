@@ -244,6 +244,8 @@ void IpDataLinkLayer::loop()
         case DisconnectRequest:
         {
             KnxIpDisconnectRequest discReq(buffer, len);
+            print("Channel ID: ");
+            println(discReq.channelId());
             
             KnxIpTunnelConnection *tun = nullptr;
             for(int i = 0; i < KNX_TUNNELING; i++)
@@ -296,14 +298,18 @@ void IpDataLinkLayer::loop()
                 //_platform.sendBytesUniCast(stateRequest.hpaiCtrl().ipAddress(), stateRequest.hpaiCtrl().ipPortNumber(), stateRes.data(), stateRes.totalLength());
                 return;
             }
-
-            if(tunnReq.connectionHeader().sequenceCounter() - 1 != tun->SequenceCounter_R)
+        
+            if((uint8_t)(tunnReq.connectionHeader().sequenceCounter() - 1) != tun->SequenceCounter_R)
             {
     #ifdef KNX_LOG_IP
-                println("Wrong SequenceCounter: got %i expected %i", tunnReq.connectionHeader().sequenceCounter(), tun->SequenceCounter + 1);
+                print("Wrong SequenceCounter: got ");
+                print(tunnReq.connectionHeader().sequenceCounter());
+                print(" expected ");
+                println((uint8_t)(tun->SequenceCounter_R + 1));
     #endif
                 //TODO überhaupt etwas zurück schicken?
                 KnxIpTunnelingAck tunnAck;
+                tunnAck.connectionHeader().length(4);
                 tunnAck.connectionHeader().channelId(tun->ChannelId);
                 tunnAck.connectionHeader().sequenceCounter(tunnReq.connectionHeader().sequenceCounter());
                 tunnAck.connectionHeader().status(E_ERROR);
@@ -319,6 +325,7 @@ void IpDataLinkLayer::loop()
             frameReceived(tunnReq.frame());
 
             KnxIpTunnelingAck tunnAck;
+            tunnAck.connectionHeader().length(4);
             tunnAck.connectionHeader().channelId(tun->ChannelId);
             tunnAck.connectionHeader().sequenceCounter(tunnReq.connectionHeader().sequenceCounter());
             tunnAck.connectionHeader().status(E_NO_ERROR);
@@ -351,7 +358,7 @@ void IpDataLinkLayer::enabled(bool value)
 #ifdef KNX_TUNNELING
 //TODO USE PID 53
         uint16_t addr = _ipParameters.propertyValue<uint16_t>(PID_KNX_INDIVIDUAL_ADDRESS);
-        uint8_t *addr = _ipParameters.propertyValue<uint8_t*>(PID_ADDITIONAL_INDIVIDUAL_ADDRESSES);
+        //uint8_t *addr = _ipParameters.propertyValue<uint8_t*>(PID_ADDITIONAL_INDIVIDUAL_ADDRESSES);
         for(int i = 0; i < KNX_TUNNELING; i++)
         {
             if((addr & 0xFF) == 255)
@@ -362,11 +369,11 @@ void IpDataLinkLayer::enabled(bool value)
             tunnels[i].IndividualAddress = ++addr;
     #ifdef KNX_LOG_IP
             print("Tunneling address: ");
-            print(tunnels[i]IndividualAddress >> 12);
+            print(tunnels[i].IndividualAddress >> 12);
             print(".");
-            print((tunnels[i]IndividualAddress >> 8) & 0xF);
+            print((tunnels[i].IndividualAddress >> 8) & 0xF);
             print(".");
-            println(tunnels[i]IndividualAddress & 0xFF);
+            println(tunnels[i].IndividualAddress & 0xFF);
     #endif
 
         }

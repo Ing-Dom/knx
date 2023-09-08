@@ -11,6 +11,6 @@ IpHostProtocolAddressInformation& KnxIpDisconnectRequest::hpaiCtrl()
 }
 uint8_t KnxIpDisconnectRequest::channelId()
 {
-    return _data[LEN_KNXIP_HEADER + 2];
+    return _data[LEN_KNXIP_HEADER];
 }
 #endif

@@ -35,4 +35,14 @@ uint8_t KnxIpCH::sequenceCounter() const
 {
     return _data[2];
 }
+
+void KnxIpCH::status(uint8_t value)
+{
+    _data[3] = value;
+}
+
+uint8_t KnxIpCH::status() const
+{
+    return _data[3];
+}
 #endif

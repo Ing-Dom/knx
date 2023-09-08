@@ -31,7 +31,7 @@ uint8_t KnxIpCRI::layer() const
     return _data[2];
 }
 
-void KnxIpKnxIpCRICRD::layer(uint8_t value)
+void KnxIpCRI::layer(uint8_t value)
 {
     _data[2] = value;
 }

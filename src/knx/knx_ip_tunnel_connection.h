@@ -11,7 +11,7 @@ class KnxIpTunnelConnection
     uint16_t PortData = 0;
     uint16_t PortCtrl = 0;
     uint8_t SequenceCounter_S = 0;
-    uint8_t SequenceCounter_R = 0;
+    uint8_t SequenceCounter_R = 255;
     unsigned long lastHeartbeat = 0;
 
     void Reset();
