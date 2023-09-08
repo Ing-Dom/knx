@@ -297,7 +297,7 @@ void IpDataLinkLayer::loop()
                 return;
             }
 
-            if(tunnReq.connectionHeader().sequenceCounter() - 1 != tun->SequenceCounter)
+            if(tunnReq.connectionHeader().sequenceCounter() - 1 != tun->SequenceCounter_R)
             {
     #ifdef KNX_LOG_IP
                 println("Wrong SequenceCounter: got %i expected %i", tunnReq.connectionHeader().sequenceCounter(), tun->SequenceCounter + 1);
@@ -311,7 +311,7 @@ void IpDataLinkLayer::loop()
                 return;
             }
 
-            tun->SequenceCounter = tunnReq.connectionHeader().sequenceCounter();
+            tun->SequenceCounter_R = tunnReq.connectionHeader().sequenceCounter();
 
             if(tunnReq.frame().sourceAddress() == 0)
                 tunnReq.frame().sourceAddress(tun->IndividualAddress);
@@ -326,6 +326,9 @@ void IpDataLinkLayer::loop()
     #ifdef KNX_LOG_IP
                 println("Frame gesendet");
     #endif
+            
+            tunnReq.connectionHeader().sequenceCounter(tun->SequenceCounter_S++);
+            _platform.sendBytesUniCast(tun->IpAddress, tun->PortData, tunnReq.data(), tunnReq.totalLength());
             break;
         }
 #endif
