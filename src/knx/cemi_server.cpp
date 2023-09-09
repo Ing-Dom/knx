@@ -11,10 +11,12 @@
 #include <stdio.h>
 
 CemiServer::CemiServer(BauSystemB& bau)
-    : _bau(bau),
-      _usbTunnelInterface(*this,
+    : _bau(bau)
+#ifdef USE_USB
+        _usbTunnelInterface(*this,
         _bau.deviceObject().maskVersion(),
         _bau.deviceObject().manufacturerId())
+#endif
 {
     // The cEMI server will hand out the device address + 1 to the cEMI client (e.g. ETS),
     // so that the device and the cEMI client/server connection(tunnel) can operate simultaneously.
@@ -49,16 +51,23 @@ void CemiServer::dataConfirmationToTunnel(CemiFrame& frame)
 
     printHex(" frame: ", frame.data(), frame.dataLength());
 
+#ifdef USE_USB
     _usbTunnelInterface.sendCemiFrame(frame);
+#endif
 
     frame.messageCode(backupMsgCode);
 }
 
 void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
 {
+#ifdef USE_RF
     bool isRf = _dataLinkLayer->mediumType() == DptMedium::KNX_RF;
     uint8_t data[frame.dataLength() + (isRf ? 10 : 0)];
+#else
+    uint8_t data[frame.dataLength()];
+#endif
 
+#ifdef USE_RF
     if (isRf)
     {
         data[0] = L_data_ind;     // Message Code
@@ -72,8 +81,11 @@ void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
     }
     else
     {
+#endif
         memcpy(&data[0], frame.data(), frame.dataLength());
+#ifdef USE_RF
     }
+#endif
 
     CemiFrame tmpFrame(data, sizeof(data));
 
@@ -85,12 +97,16 @@ void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
     printHex(" frame: ", tmpFrame.data(), tmpFrame.dataLength());
     tmpFrame.apdu().type();
 
+#ifdef USE_USB
     _usbTunnelInterface.sendCemiFrame(tmpFrame);
+#endif
 }
 
 void CemiServer::frameReceived(CemiFrame& frame)
 {
+#ifdef USE_RF
     bool isRf = _dataLinkLayer->mediumType() == DptMedium::KNX_RF;
+#endif
 
     switch(frame.messageCode())
     {
@@ -103,6 +119,7 @@ void CemiServer::frameReceived(CemiFrame& frame)
                 frame.sourceAddress(_clientAddress);
             }
 
+#ifdef USE_RF
             if (isRf)
             {
                 // Check if we have additional info for RF
@@ -133,6 +150,7 @@ void CemiServer::frameReceived(CemiFrame& frame)
                     _frameNumber = (_frameNumber + 1) & 0x7;
                 }
             }
+#endif
 
             print("L_data_req: src: ");
             print(frame.sourceAddress(), HEX);
@@ -202,7 +220,9 @@ void CemiServer::frameReceived(CemiFrame& frame)
                 
                 CemiFrame responseFrame(responseData, sizeof(responseData));
                 responseFrame.messageCode(M_PropRead_con);
+#ifdef USE_USB
                 _usbTunnelInterface.sendCemiFrame(responseFrame);
+#endif
 
                 delete[] data;
             }
@@ -219,7 +239,9 @@ void CemiServer::frameReceived(CemiFrame& frame)
 
                 CemiFrame responseFrame(responseData, sizeof(responseData));
                 responseFrame.messageCode(M_PropRead_con);
+#ifdef USE_USB
                 _usbTunnelInterface.sendCemiFrame(responseFrame);
+#endif
             }
             break;
         }
@@ -286,7 +308,9 @@ void CemiServer::frameReceived(CemiFrame& frame)
 
                 CemiFrame responseFrame(responseData, sizeof(responseData));
                 responseFrame.messageCode(M_PropWrite_con);
+#ifdef USE_USB
                 _usbTunnelInterface.sendCemiFrame(responseFrame);
+#endif
             }
             else
             {
@@ -301,7 +325,9 @@ void CemiServer::frameReceived(CemiFrame& frame)
 
                 CemiFrame responseFrame(responseData, sizeof(responseData));
                 responseFrame.messageCode(M_PropWrite_con);
+#ifdef USE_USB
                 _usbTunnelInterface.sendCemiFrame(responseFrame);
+#endif
             }
             break;
         }
@@ -329,7 +355,9 @@ void CemiServer::frameReceived(CemiFrame& frame)
             uint8_t responseData[1];
             CemiFrame responseFrame(responseData, sizeof(responseData));
             responseFrame.messageCode(M_Reset_ind);
+#ifdef USE_USB
             _usbTunnelInterface.sendCemiFrame(responseFrame);
+#endif
             break;
         }
 
@@ -349,7 +377,9 @@ void CemiServer::frameReceived(CemiFrame& frame)
 
 void CemiServer::loop()
 {
+#ifdef USE_USB
     _usbTunnelInterface.loop();
+#endif
 }
 
 #endif
