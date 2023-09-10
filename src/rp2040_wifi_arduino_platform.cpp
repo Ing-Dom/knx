@@ -85,10 +85,11 @@ int RP2040WifiArduinoPlatform::readBytesMultiCast(uint8_t* buffer, uint16_t maxL
 
     _udp.read(buffer, len);
     
+#ifdef KNX_LOG_IP
     KNX_DEBUG_SERIAL.printf("Remote IP: ");
     _udp.remoteIP().printTo(KNX_DEBUG_SERIAL);
-
     printHex("-> ", buffer, len);
+#endif
     return len;
 }
 
@@ -97,8 +98,10 @@ bool RP2040WifiArduinoPlatform::sendBytesUniCast(uint32_t addr, uint16_t port, u
 {
     
     IPAddress ucastaddr(htonl(addr));
+#ifdef KNX_LOG_IP
     print("sendBytesUniCast to:");
     println(ucastaddr.toString().c_str());
+#endif
 
     _udp_uni.begin(3671);
     if (_udp_uni.beginPacket(ucastaddr, port) == 1)

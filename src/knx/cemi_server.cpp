@@ -40,6 +40,7 @@ void CemiServer::clientAddress(uint16_t value)
 
 void CemiServer::dataConfirmationToTunnel(CemiFrame& frame)
 {
+    println("From Tunnel");
     MessageCode backupMsgCode = frame.messageCode();
 
     frame.messageCode(L_data_con);
@@ -60,6 +61,7 @@ void CemiServer::dataConfirmationToTunnel(CemiFrame& frame)
 
 void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
 {
+    println("To Tunnel");
 #ifdef USE_RF
     bool isRf = _dataLinkLayer->mediumType() == DptMedium::KNX_RF;
     uint8_t data[frame.dataLength() + (isRf ? 10 : 0)];
@@ -99,11 +101,14 @@ void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
 
 #ifdef USE_USB
     _usbTunnelInterface.sendCemiFrame(tmpFrame);
+#elif defined(KNX_TUNNELING)
+    println("Send to Tunnel");
 #endif
 }
 
 void CemiServer::frameReceived(CemiFrame& frame)
 {
+    println("cemi frame received");
 #ifdef USE_RF
     bool isRf = _dataLinkLayer->mediumType() == DptMedium::KNX_RF;
 #endif
@@ -114,10 +119,13 @@ void CemiServer::frameReceived(CemiFrame& frame)
         {
             // Fill in the cEMI client address if the client sets 
             // source address to 0.
+#ifndef KNX_TUNNELING
+            //We already set the correct IA
             if(frame.sourceAddress() == 0x0000)
             {
                 frame.sourceAddress(_clientAddress);
             }
+#endif
 
 #ifdef USE_RF
             if (isRf)
@@ -156,9 +164,8 @@ void CemiServer::frameReceived(CemiFrame& frame)
             print(frame.sourceAddress(), HEX);
             print(" dst: ");
             print(frame.destinationAddress(), HEX);
-
             printHex(" frame: ", frame.data(), frame.dataLength());
-
+            println();
             _dataLinkLayer->dataRequestFromTunnel(frame);
             break;
         }

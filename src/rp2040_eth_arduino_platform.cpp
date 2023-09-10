@@ -62,9 +62,9 @@ void RP2040EthArduinoPlatform::setupMultiCast(uint32_t addr, uint16_t port)
     println(result);
     
 #ifdef KNX_TUNNELING
-    result = _udp_uni.begin(3671);
+    _unicast_socket_setup =_udp_uni.begin(3671);
     print("Setup Ucast addr: on port: 3671 result ");
-    println(result);
+    println(_unicast_socket_setup);
 #endif
 }
 
@@ -117,10 +117,8 @@ bool RP2040EthArduinoPlatform::sendBytesUniCast(uint32_t addr, uint16_t port, ui
     println(ucastaddr.toString().c_str());
 #endif
 
-#ifndef KNX_TUNNELING
     if(!_unicast_socket_setup)
         _unicast_socket_setup =_udp_uni.begin(3671);
-#endif
 
     if (_udp_uni.beginPacket(ucastaddr, port) == 1)
     {
