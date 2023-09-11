@@ -40,7 +40,7 @@ void CemiServer::clientAddress(uint16_t value)
 
 void CemiServer::dataConfirmationToTunnel(CemiFrame& frame)
 {
-    println("From Tunnel");
+    println("To Tunnel");
     MessageCode backupMsgCode = frame.messageCode();
 
     frame.messageCode(L_data_con);
@@ -54,6 +54,8 @@ void CemiServer::dataConfirmationToTunnel(CemiFrame& frame)
 
 #ifdef USE_USB
     _usbTunnelInterface.sendCemiFrame(frame);
+#elif defined(KNX_TUNNELING)
+    _dataLinkLayer->dataRequestToTunnel(frame);
 #endif
 
     frame.messageCode(backupMsgCode);
@@ -102,7 +104,7 @@ void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
 #ifdef USE_USB
     _usbTunnelInterface.sendCemiFrame(tmpFrame);
 #elif defined(KNX_TUNNELING)
-    println("Send to Tunnel");
+    _dataLinkLayer->dataRequestToTunnel(frame);
 #endif
 }
 

@@ -20,6 +20,9 @@ class IpDataLinkLayer : public DataLinkLayer
     void enabled(bool value);
     bool enabled() const;
     DptMedium mediumType() const override;
+#ifdef KNX_TUNNELING
+    void dataRequestToTunnel(CemiFrame& frame) override;
+#endif
 
   private:
     bool _enabled = false;
@@ -27,6 +30,9 @@ class IpDataLinkLayer : public DataLinkLayer
     uint8_t _frameCountBase = 0;
     uint32_t _frameCountTimeBase = 0;
     bool sendFrame(CemiFrame& frame);
+#ifdef KNX_TUNNELING
+    bool sendFrameToTunnel(KnxIpTunnelConnection *tunnel, CemiFrame& frame);
+#endif
     bool sendBytes(uint8_t* buffer, uint16_t length);
     bool isSendLimitReached();
 

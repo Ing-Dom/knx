@@ -8,6 +8,7 @@ KnxIpTunnelConnection::KnxIpTunnelConnection()
 void KnxIpTunnelConnection::Reset()
 {
     ChannelId = 0;
+    ChannelIdConfig = 0;
     IpAddress = 0;
     PortData = 0;
     PortCtrl = 0;

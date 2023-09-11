@@ -6,6 +6,7 @@ class KnxIpTunnelConnection
   public:
     KnxIpTunnelConnection();
     uint8_t ChannelId = 0;
+    uint8_t ChannelIdConfig = 0;
     uint16_t IndividualAddress = 0;
     uint32_t IpAddress = 0;
     uint16_t PortData = 0;
