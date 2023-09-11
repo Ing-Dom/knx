@@ -29,6 +29,9 @@ class CemiServer
     CemiServer(BauSystemB& bau);
 
     void dataLinkLayer(DataLinkLayer& layer);
+#ifdef KNX_TUNNELING
+    void dataLinkLayerPrimary(DataLinkLayer& layer);
+#endif
 
     // from data link layer
     // Only L_Data service
@@ -48,6 +51,9 @@ class CemiServer
     uint8_t _frameNumber = 0;
 
     DataLinkLayer* _dataLinkLayer = nullptr;
+#ifdef KNX_TUNNELING
+    DataLinkLayer* _dataLinkLayerPrimary = nullptr;
+#endif
     BauSystemB& _bau;
     //UsbTunnelInterface _usbTunnelInterface;
 };

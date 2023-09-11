@@ -37,6 +37,7 @@ Bau091A::Bau091A(Platform& platform)
 #ifdef USE_CEMI_SERVER
     _cemiServerObject.setMediumTypeAsSupported(DptMedium::KNX_IP);
     _cemiServerObject.setMediumTypeAsSupported(DptMedium::KNX_TP1);
+    _cemiServer.dataLinkLayerPrimary(_dlLayerPrimary);
     _cemiServer.dataLinkLayer(_dlLayerSecondary); // Secondary I/F is the important one!
     _dlLayerPrimary.cemiServer(_cemiServer);
     _dlLayerSecondary.cemiServer(_cemiServer);

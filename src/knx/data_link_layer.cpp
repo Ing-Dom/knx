@@ -18,6 +18,11 @@ void DataLinkLayer::cemiServer(CemiServer& cemiServer)
     _cemiServer = &cemiServer;
 }
 
+void DataLinkLayer::dataRequestToTunnel(CemiFrame& frame)
+{
+    println("default dataRequestToTunnel");
+}
+
 void DataLinkLayer::dataRequestFromTunnel(CemiFrame& frame)
 {
     _cemiServer->dataConfirmationToTunnel(frame);

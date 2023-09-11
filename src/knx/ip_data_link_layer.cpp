@@ -50,10 +50,12 @@ bool IpDataLinkLayer::sendFrame(CemiFrame& frame)
 #ifdef KNX_TUNNELING
 void IpDataLinkLayer::dataRequestToTunnel(CemiFrame& frame)
 {
+    println("dataRequestToTunnel");
     if(frame.addressType() == AddressType::GroupAddress)
     {
         for(int i = 0; i < KNX_TUNNELING; i++)
-            sendFrameToTunnel(&tunnels[i], frame);
+            if(tunnels[i].ChannelId != 0)
+                sendFrameToTunnel(&tunnels[i], frame);
         return;
     }
 
@@ -77,11 +79,14 @@ void IpDataLinkLayer::dataRequestToTunnel(CemiFrame& frame)
     sendFrameToTunnel(tun, frame);
 }
 
-bool IpDataLinkLayer::sendFrameToTunnel(KnxIpTunnelConnection *tunnel, CemiFrame& frame)
+void IpDataLinkLayer::sendFrameToTunnel(KnxIpTunnelConnection *tunnel, CemiFrame& frame)
 {
     print("Send to Channel: ");
     println(tunnel->ChannelId, 16);
     KnxIpTunnelingRequest req(frame);
+    req.connectionHeader().channelId(tunnel->ChannelId);
+    req.connectionHeader().sequenceCounter(tunnel->SequenceCounter_S++);
+    req.connectionHeader().length(LEN_CH);
     _platform.sendBytesUniCast(tunnel->IpAddress, tunnel->PortData, req.data(), req.totalLength());
 }
 #endif
@@ -91,7 +96,6 @@ void IpDataLinkLayer::loop()
     if (!_enabled)
         return;
 
-/*
 #ifdef KNX_TUNNELING
     for(int i = 0; i < KNX_TUNNELING; i++)
     {
@@ -106,23 +110,18 @@ void IpDataLinkLayer::loop()
     #endif
                 KnxIpDisconnectRequest discReq;
                 discReq.channelId(tunnels[i].ChannelId);
-                println("channelId");
-                discReq.hpaiCtrl().length(4);
-                println("length");
+                discReq.hpaiCtrl().length(LEN_IPHPAI);
                 discReq.hpaiCtrl().code(IPV4_UDP);
-                println("code");
                 discReq.hpaiCtrl().ipAddress(tunnels[i].IpAddress);
-                println("ip");
                 discReq.hpaiCtrl().ipPortNumber(tunnels[i].PortCtrl);
-                println("port");
-                _platform.sendBytesUniCast(discReq.hpaiCtrl().ipAddress(), discReq.hpaiCtrl().ipPortNumber(), discReq.data(), discReq.totalLength());
+                _platform.sendBytesUniCast(tunnels[i].IpAddress, tunnels[i].PortCtrl, discReq.data(), discReq.totalLength());
                 tunnels[i].Reset();
             }
             break;
         }
     }
 #endif
-*/
+
 
     uint8_t buffer[512];
     int len = _platform.readBytesMultiCast(buffer, 512);
@@ -287,9 +286,13 @@ void IpDataLinkLayer::loop()
             tun->PortData = connRequest.hpaiData().ipPortNumber();
             tun->PortCtrl = connRequest.hpaiCtrl().ipPortNumber();
 
-            KnxIpConnectResponse connRes(_ipParameters, tun->IndividualAddress, 3671, ((connRequest.cri().type() == TUNNEL_CONNECTION) ? tun->ChannelId : tun->ChannelIdConfig), connRequest.cri().type());
+            print("Port: ");
+            println(tun->PortCtrl);
 
-            _platform.sendBytesUniCast(tun->IpAddress, tun->PortCtrl, connRes.data(), connRes.totalLength());
+            KnxIpConnectResponse connRes(_ipParameters, tun->IndividualAddress, 3671, ((connRequest.cri().type() == TUNNEL_CONNECTION) ? tun->ChannelId : tun->ChannelIdConfig), connRequest.cri().type());
+            bool x = _platform.sendBytesUniCast(tun->IpAddress, tun->PortCtrl, connRes.data(), connRes.totalLength());
+            print("Sent response ");
+            println(x);
             break;
         }
 
@@ -383,7 +386,7 @@ void IpDataLinkLayer::loop()
             KnxIpTunnelConnection *tun = nullptr;
             for(int i = 0; i < KNX_TUNNELING; i++)
             {
-                if(tunnels[i].ChannelId == confReq.connectionHeader().channelId())
+                if(tunnels[i].ChannelIdConfig == confReq.connectionHeader().channelId())
                 {
                     tun = &tunnels[i];
                     break;
@@ -401,16 +404,7 @@ void IpDataLinkLayer::loop()
                 _platform.sendBytesUniCast(tun->IpAddress, tun->PortCtrl, stateRes.data(), stateRes.totalLength());
                 return;
             }
-
-            if(!tun->isDeviceManagment)
-            {
-    #ifdef KNX_LOG_TUNNELING
-                print("Channel ist nicht für Config zugelassen!: ");
-                println(confReq.connectionHeader().channelId());
-    #endif
-                return;
-            }
-        
+            _cemiServer->frameReceived(confReq.frame());
             break;
         }
 
@@ -457,6 +451,17 @@ void IpDataLinkLayer::loop()
                 _platform.sendBytesUniCast(tun->IpAddress, tun->PortData, tunnAck.data(), tunnAck.totalLength());
                 return;
             }
+            
+            KnxIpTunnelingAck tunnAck;
+            tunnAck.connectionHeader().length(4);
+            tunnAck.connectionHeader().channelId(tun->ChannelId);
+            tunnAck.connectionHeader().sequenceCounter(tunnReq.connectionHeader().sequenceCounter());
+            tunnAck.connectionHeader().status(E_NO_ERROR);
+            bool x = _platform.sendBytesUniCast(tun->IpAddress, tun->PortData, tunnAck.data(), tunnAck.totalLength());
+    #ifdef KNX_LOG_TUNNELING
+            print("Ack gesendet ");
+            println(x);
+    #endif
 
             tun->SequenceCounter_R = tunnReq.connectionHeader().sequenceCounter();
 
@@ -464,26 +469,13 @@ void IpDataLinkLayer::loop()
                 tunnReq.frame().sourceAddress(tun->IndividualAddress);
 
             _cemiServer->frameReceived(tunnReq.frame());
-
-            KnxIpTunnelingAck tunnAck;
-            tunnAck.connectionHeader().length(4);
-            tunnAck.connectionHeader().channelId(tun->ChannelId);
-            tunnAck.connectionHeader().sequenceCounter(tunnReq.connectionHeader().sequenceCounter());
-            tunnAck.connectionHeader().status(E_NO_ERROR);
-            _platform.sendBytesUniCast(tun->IpAddress, tun->PortData, tunnAck.data(), tunnAck.totalLength());
-    #ifdef KNX_LOG_TUNNELING
-            println("Frame gesendet");
-    #endif
-            
-            tunnReq.connectionHeader().sequenceCounter(tun->SequenceCounter_S++);
-            _platform.sendBytesUniCast(tun->IpAddress, tun->PortData, tunnReq.data(), tunnReq.totalLength());
-            break;
+            return;
         }
 
         case TunnelingAck:
         {
             //TOOD nothing to do now
-            println("got Ack");
+            //println("got Ack");
             break;
         }
 #endif

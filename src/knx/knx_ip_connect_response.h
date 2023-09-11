@@ -36,6 +36,7 @@ class KnxIpConnectResponse : public KnxIpFrame
     KnxIpConnectResponse(IpParameterObject& parameters, uint16_t address, uint16_t port, uint8_t channel, uint8_t type);
     KnxIpConnectResponse(uint8_t channel, uint8_t errorCode);
     IpHostProtocolAddressInformation& controlEndpoint();
+    KnxIpCRD& crd();
   private:
     IpHostProtocolAddressInformation _controlEndpoint;
     KnxIpCRD _crd;

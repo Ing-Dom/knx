@@ -15,5 +15,4 @@ void KnxIpTunnelConnection::Reset()
     lastHeartbeat = 0;
     SequenceCounter_S = 0;
     SequenceCounter_R = 255;
-    isDeviceManagment = false;
 }

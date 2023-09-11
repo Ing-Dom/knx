@@ -28,6 +28,13 @@ void CemiServer::dataLinkLayer(DataLinkLayer& layer)
     _dataLinkLayer = &layer;
 }
 
+#ifdef KNX_TUNNELING
+void CemiServer::dataLinkLayerPrimary(DataLinkLayer& layer)
+{
+    _dataLinkLayerPrimary = &layer;
+}
+
+#endif
 uint16_t CemiServer::clientAddress() const
 {
     return _clientAddress;
@@ -40,7 +47,7 @@ void CemiServer::clientAddress(uint16_t value)
 
 void CemiServer::dataConfirmationToTunnel(CemiFrame& frame)
 {
-    println("To Tunnel");
+    println("dataConfirmationToTunnel");
     MessageCode backupMsgCode = frame.messageCode();
 
     frame.messageCode(L_data_con);
@@ -63,7 +70,7 @@ void CemiServer::dataConfirmationToTunnel(CemiFrame& frame)
 
 void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
 {
-    println("To Tunnel");
+    println("dataIndicationToTunnel");
 #ifdef USE_RF
     bool isRf = _dataLinkLayer->mediumType() == DptMedium::KNX_RF;
     uint8_t data[frame.dataLength() + (isRf ? 10 : 0)];
@@ -104,7 +111,7 @@ void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
 #ifdef USE_USB
     _usbTunnelInterface.sendCemiFrame(tmpFrame);
 #elif defined(KNX_TUNNELING)
-    _dataLinkLayer->dataRequestToTunnel(frame);
+    _dataLinkLayerPrimary->dataRequestToTunnel(frame);
 #endif
 }
 
