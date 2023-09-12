@@ -101,7 +101,7 @@ void IpDataLinkLayer::loop()
     {
         if(tunnels[i].ChannelId != 0)
         {
-            if(millis() - tunnels[i].lastHeartbeat > 30000)
+            if(millis() - tunnels[i].lastHeartbeat > 120000)
             {
     #ifdef KNX_LOG_TUNNELING
                 print("Closed Tunnel 0x");
@@ -404,6 +404,7 @@ void IpDataLinkLayer::loop()
                 _platform.sendBytesUniCast(tun->IpAddress, tun->PortCtrl, stateRes.data(), stateRes.totalLength());
                 return;
             }
+            tun->lastHeartbeat = millis();
             _cemiServer->frameReceived(confReq.frame());
             break;
         }
