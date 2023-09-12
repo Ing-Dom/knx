@@ -435,21 +435,30 @@ void IpDataLinkLayer::loop()
                 return;
             }
         
-            if((uint8_t)(tunnReq.connectionHeader().sequenceCounter() - 1) != tun->SequenceCounter_R)
+            uint8_t sequence = tunnReq.connectionHeader().sequenceCounter();
+            if(sequence == tun->SequenceCounter_R)
             {
+    #ifdef KNX_LOG_TUNNELING
+                print("Received SequenceCounter again: ");
+                println(tunnReq.connectionHeader().sequenceCounter());
+    #endif
+                //we already got this one
+                //so just ack it
+                KnxIpTunnelingAck tunnAck;
+                tunnAck.connectionHeader().length(4);
+                tunnAck.connectionHeader().channelId(tun->ChannelId);
+                tunnAck.connectionHeader().sequenceCounter(tunnReq.connectionHeader().sequenceCounter());
+                tunnAck.connectionHeader().status(E_NO_ERROR);
+                _platform.sendBytesUniCast(tun->IpAddress, tun->PortData, tunnAck.data(), tunnAck.totalLength());
+                return;
+            } else if((uint8_t)(sequence - 1) != tun->SequenceCounter_R) {
     #ifdef KNX_LOG_TUNNELING
                 print("Wrong SequenceCounter: got ");
                 print(tunnReq.connectionHeader().sequenceCounter());
                 print(" expected ");
                 println((uint8_t)(tun->SequenceCounter_R + 1));
     #endif
-                //TODO überhaupt etwas zurück schicken?
-                KnxIpTunnelingAck tunnAck;
-                tunnAck.connectionHeader().length(4);
-                tunnAck.connectionHeader().channelId(tun->ChannelId);
-                tunnAck.connectionHeader().sequenceCounter(tunnReq.connectionHeader().sequenceCounter());
-                tunnAck.connectionHeader().status(E_ERROR);
-                _platform.sendBytesUniCast(tun->IpAddress, tun->PortData, tunnAck.data(), tunnAck.totalLength());
+                //Dont handle it
                 return;
             }
             
@@ -458,11 +467,7 @@ void IpDataLinkLayer::loop()
             tunnAck.connectionHeader().channelId(tun->ChannelId);
             tunnAck.connectionHeader().sequenceCounter(tunnReq.connectionHeader().sequenceCounter());
             tunnAck.connectionHeader().status(E_NO_ERROR);
-            bool x = _platform.sendBytesUniCast(tun->IpAddress, tun->PortData, tunnAck.data(), tunnAck.totalLength());
-    #ifdef KNX_LOG_TUNNELING
-            print("Ack gesendet ");
-            println(x);
-    #endif
+            _platform.sendBytesUniCast(tun->IpAddress, tun->PortData, tunnAck.data(), tunnAck.totalLength());
 
             tun->SequenceCounter_R = tunnReq.connectionHeader().sequenceCounter();
 
