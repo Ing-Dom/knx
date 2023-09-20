@@ -14,6 +14,8 @@ credits to https://github.com/ecarjat
 #if defined(ARDUINO_ARCH_RP2040) && defined(KNX_ETH_GEN)
 
 #include "knx/bits.h"
+#include <W5500lwIP.h>
+extern Wiznet5500lwIP eth;
 
 
 RP2040EthArduinoPlatform::RP2040EthArduinoPlatform()
@@ -31,19 +33,21 @@ RP2040EthArduinoPlatform::RP2040EthArduinoPlatform( HardwareSerial* s) : RP2040A
 
 uint32_t RP2040EthArduinoPlatform::currentIpAddress()
 {
-    return Ethernet.localIP();
+    return eth.localIP();
 }
 uint32_t RP2040EthArduinoPlatform::currentSubnetMask()
 {
-    return Ethernet.subnetMask();
+    return eth.subnetMask();
 }
 uint32_t RP2040EthArduinoPlatform::currentDefaultGateway()
 {
-    return Ethernet.gatewayIP();
+    return eth.gatewayIP();
 }
 void RP2040EthArduinoPlatform::macAddress(uint8_t* addr)
 {
-    Ethernet.MACAddress(addr);
+    //eth.getSHAR(addr);
+    //Ethernet.MACAddress(addr);
+    return nullptr; // ToDo
 }
 
 // multicast
