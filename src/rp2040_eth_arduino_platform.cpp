@@ -45,9 +45,7 @@ uint32_t RP2040EthArduinoPlatform::currentDefaultGateway()
 }
 void RP2040EthArduinoPlatform::macAddress(uint8_t* addr)
 {
-    //eth.getSHAR(addr);
-    //Ethernet.MACAddress(addr);
-    return nullptr; // ToDo
+    addr = eth.getNetIf()->hwaddr;
 }
 
 // multicast

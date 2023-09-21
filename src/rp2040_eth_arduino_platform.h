@@ -10,24 +10,7 @@
 
 
 #include <SPI.h>
-
-#ifndef DEBUG_ETHERNET_GENERIC_PORT
-#define DEBUG_ETHERNET_GENERIC_PORT         Serial
-#endif
-
-#ifndef _ETG_LOGLEVEL_
-#define _ETG_LOGLEVEL_                      1
-#endif
-
-// set to true if you want to use SPI1, otherwise SPI is used.
-//#define ETHERNET_GENERIC_USING_SPI2                          false
-
-#define ETHERNET_USE_RPIPICO      true
-#define ETHERNET_LARGE_BUFFERS
-#include <Ethernet_Generic.hpp>
-#include <EthernetClient.h>             // https://github.com/khoih-prog/Ethernet_Generic
-#include <EthernetServer.h>             // https://github.com/khoih-prog/Ethernet_Generic
-#include <EthernetUdp.h>
+#include <W5500lwIP.h>
 
 
 class RP2040EthArduinoPlatform : public RP2040ArduinoPlatform
@@ -54,8 +37,8 @@ public:
 
   protected:
 
-    EthernetUDP _udp;
-    EthernetUDP _udp_uni;
+    WiFiUDP _udp;
+    WiFiUDP _udp_uni;
     bool _unicast_socket_setup = false;
     IPAddress mcastaddr;
     uint16_t _port;
