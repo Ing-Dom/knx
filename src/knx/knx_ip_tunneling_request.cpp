@@ -8,7 +8,7 @@ KnxIpTunnelingRequest::KnxIpTunnelingRequest(uint8_t* data,
 }
 
 KnxIpTunnelingRequest::KnxIpTunnelingRequest(CemiFrame frame)
-    : KnxIpFrame(frame.totalLenght() + LEN_CH + LEN_KNXIP_HEADER), _ch(_data + headerLength()), _frame(_data + LEN_CH + headerLength(), frame.totalLenght())
+    : KnxIpFrame(frame.totalLenght() + LEN_CH + LEN_KNXIP_HEADER), _ch(_data + LEN_KNXIP_HEADER), _frame(_data + LEN_CH + LEN_KNXIP_HEADER, frame.totalLenght())
 {
     serviceTypeIdentifier(TunnelingRequest);
     memcpy(_data + LEN_KNXIP_HEADER + LEN_CH, frame.data(), frame.totalLenght());

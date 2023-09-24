@@ -128,16 +128,12 @@ void CemiFrame::messageCode(MessageCode msgCode)
 
 uint16_t CemiFrame::totalLenght() const
 {
-    if(_data[0] == L_data_con || _data[0] == L_data_ind || _data[0] == L_data_req)
-    {
-        //if it is an L_data frame, we have a npdu
-        uint16_t tmp = 
-        _npdu.length() + NPDU_LPDU_DIFF;
-        return tmp;
-    } else {
-        //if it is an M_Prop or something else, we dont have a npdu
-        return _length;
-    }
+    if(messageCode() != L_data_con && messageCode() != L_data_ind && messageCode() != L_data_req)
+        return _length; // we dont have an npu on any other messagecode
+
+    uint16_t tmp = 
+    _npdu.length() + NPDU_LPDU_DIFF;
+    return tmp;
 }
 
 uint16_t CemiFrame::telegramLengthtTP() const

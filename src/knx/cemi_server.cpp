@@ -169,19 +169,22 @@ void CemiServer::frameReceived(CemiFrame& frame)
             }
 #endif
 
+#ifdef KNX_LOG_TUNNELING
             print("L_data_req: src: ");
             print(frame.sourceAddress(), HEX);
             print(" dst: ");
             print(frame.destinationAddress(), HEX);
             printHex(" frame: ", frame.data(), frame.dataLength());
-            println();
+#endif
             _dataLinkLayer->dataRequestFromTunnel(frame);
             break;
         }
 
         case M_PropRead_req:
         {
+#ifdef KNX_LOG_TUNNELING
             print("M_PropRead_req: ");
+#endif
             
             uint16_t objectType;
             popWord(objectType, &frame.data()[1]);
@@ -192,6 +195,7 @@ void CemiServer::frameReceived(CemiFrame& frame)
             uint8_t* data = nullptr;
             uint32_t dataSize = 0;
 
+#ifdef KNX_LOG_TUNNELING
             print("ObjType: ");
             print(objectType, DEC);
             print(" ObjInst: ");
@@ -202,6 +206,7 @@ void CemiServer::frameReceived(CemiFrame& frame)
             print(numberOfElements, DEC);
             print(" startIdx: ");
             print(startIndex, DEC);
+#endif
 
             // propertyValueRead() allocates memory for the data! Needs to be deleted again!
             _bau.propertyValueRead((ObjectType)objectType, objectInstance, propertyId, numberOfElements, startIndex, &data, dataSize);
@@ -226,20 +231,22 @@ void CemiServer::frameReceived(CemiFrame& frame)
 
             if (data && dataSize && numberOfElements)
             {
+#ifdef KNX_LOG_TUNNELING
                 printHex(" <- data: ", data, dataSize);
-                println("");
+#endif
 
                 // Prepare positive response
                 uint8_t responseData[7 + dataSize];
                 memcpy(responseData, frame.data(), 7);
                 memcpy(&responseData[7], data, dataSize); 
-                
+
                 CemiFrame responseFrame(responseData, sizeof(responseData));
                 responseFrame.messageCode(M_PropRead_con);
 #ifdef USE_USB
                 _usbTunnelInterface.sendCemiFrame(responseFrame);
+#elif defined(KNX_TUNNELING)
+                _dataLinkLayerPrimary->dataRequestToTunnel(responseFrame);
 #endif
-
                 delete[] data;
             }
             else
@@ -257,6 +264,8 @@ void CemiServer::frameReceived(CemiFrame& frame)
                 responseFrame.messageCode(M_PropRead_con);
 #ifdef USE_USB
                 _usbTunnelInterface.sendCemiFrame(responseFrame);
+#elif defined(KNX_TUNNELING)
+            _dataLinkLayerPrimary->dataRequestToTunnel(responseFrame);
 #endif
             }
             break;
@@ -326,6 +335,8 @@ void CemiServer::frameReceived(CemiFrame& frame)
                 responseFrame.messageCode(M_PropWrite_con);
 #ifdef USE_USB
                 _usbTunnelInterface.sendCemiFrame(responseFrame);
+#elif defined(KNX_TUNNELING)
+            _dataLinkLayerPrimary->dataRequestToTunnel(responseFrame);
 #endif
             }
             else
@@ -343,6 +354,8 @@ void CemiServer::frameReceived(CemiFrame& frame)
                 responseFrame.messageCode(M_PropWrite_con);
 #ifdef USE_USB
                 _usbTunnelInterface.sendCemiFrame(responseFrame);
+#elif defined(KNX_TUNNELING)
+            _dataLinkLayerPrimary->dataRequestToTunnel(responseFrame);
 #endif
             }
             break;
@@ -373,6 +386,8 @@ void CemiServer::frameReceived(CemiFrame& frame)
             responseFrame.messageCode(M_Reset_ind);
 #ifdef USE_USB
             _usbTunnelInterface.sendCemiFrame(responseFrame);
+#elif defined(KNX_TUNNELING)
+            _dataLinkLayerPrimary->dataRequestToTunnel(responseFrame);
 #endif
             break;
         }

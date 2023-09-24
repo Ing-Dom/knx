@@ -56,6 +56,7 @@ void IpDataLinkLayer::dataRequestToTunnel(CemiFrame& frame)
         for(int i = 0; i < KNX_TUNNELING; i++)
             if(tunnels[i].ChannelId != 0)
                 sendFrameToTunnel(&tunnels[i], frame);
+                //TODO check if source is from tunnel
         return;
     }
 
@@ -71,6 +72,19 @@ void IpDataLinkLayer::dataRequestToTunnel(CemiFrame& frame)
 
     if(tun == nullptr)
     {
+        for(int i = 0; i < KNX_TUNNELING; i++)
+        {
+            if(tunnels[i].IsConfig)
+            {
+                println("Found config Channel");
+                tun = &tunnels[i];
+                break;
+            }
+        }
+    }
+
+    if(tun == nullptr)
+    {
         print("Found no Tunnel for IA: ");
         println(frame.destinationAddress(), 16);
         return;
@@ -81,12 +95,18 @@ void IpDataLinkLayer::dataRequestToTunnel(CemiFrame& frame)
 
 void IpDataLinkLayer::sendFrameToTunnel(KnxIpTunnelConnection *tunnel, CemiFrame& frame)
 {
+#ifdef KNX_LOG_TUNNELING
     print("Send to Channel: ");
     println(tunnel->ChannelId, 16);
+#endif
     KnxIpTunnelingRequest req(frame);
-    req.connectionHeader().channelId(tunnel->ChannelId);
     req.connectionHeader().sequenceCounter(tunnel->SequenceCounter_S++);
     req.connectionHeader().length(LEN_CH);
+    req.connectionHeader().channelId(tunnel->ChannelId);
+
+    if(frame.messageCode() != L_data_req && frame.messageCode() != L_data_con && frame.messageCode() != L_data_ind)
+        req.serviceTypeIdentifier(DeviceConfigurationRequest);
+
     _platform.sendBytesUniCast(tunnel->IpAddress, tunnel->PortData, req.data(), req.totalLength());
 }
 #endif
@@ -145,6 +165,7 @@ void IpDataLinkLayer::loop()
             frameReceived(routingIndication.frame());
             break;
         }
+        
         case SearchRequest:
         {
             KnxIpSearchRequest searchRequest(buffer, len);
@@ -154,11 +175,13 @@ void IpDataLinkLayer::loop()
             _platform.sendBytesUniCast(hpai.ipAddress(), hpai.ipPortNumber(), searchResponse.data(), searchResponse.totalLength());
             break;
         }
+        
         case SearchRequestExt:
         {
             // FIXME, implement (not needed atm)
             break;
         }
+
 #ifdef KNX_TUNNELING
         case ConnectRequest:
         {
@@ -230,50 +253,68 @@ void IpDataLinkLayer::loop()
                 return;
             }
 
-
             KnxIpTunnelConnection *tun = nullptr;
             for(int i = 0; i < KNX_TUNNELING; i++)
             {
-                if(connRequest.cri().type() == TUNNEL_CONNECTION)
+                if(tunnels[i].ChannelId == 0)
                 {
-                    if(tunnels[i].ChannelId == 0)
+                    tun = &tunnels[i];
+                    break;
+                }
+            }
+
+            bool hasDoublePA = false;
+            const uint8_t *addresses = _ipParameters.propertyData(PID_ADDITIONAL_INDIVIDUAL_ADDRESSES);
+            for(int i = 0; i < KNX_TUNNELING; i++)
+            {
+                uint16_t pa = 0;
+                popWord(pa, addresses + (i*2));
+
+                for(int x = 0; x < KNX_TUNNELING; x++)
+                {
+                    uint16_t pa2 = 0;
+                    popWord(pa2, addresses + (x*2));
+                    if(i != x && pa == pa2)
                     {
-                        tun = &tunnels[i];
-                        break;
-                    }
-                } else {
-                    if(tunnels[i].PortCtrl == connRequest.hpaiCtrl().ipPortNumber())
-                    {
-                        tun = &tunnels[i];
+                        hasDoublePA = false;
                         break;
                     }
                 }
+
+                bool isInUse = false;
+                for(int x = 0; x < KNX_TUNNELING; x++)
+                {
+                    if(tunnels[x].IndividualAddress == pa)
+                        isInUse = true;
+                }
+
+                if(isInUse)
+                    continue;
+
+                if(!hasDoublePA)
+                    print("Not Unique ");
+                tun->IndividualAddress = pa;
+                break;
             }
 
             if(tun == nullptr)
             {
-    #ifdef KNX_LOG_TUNNELING
                 println("Kein freier Tunnel verfügbar");
-    #endif
                 KnxIpConnectResponse connRes(0x00, E_NO_MORE_CONNECTIONS);
                 _platform.sendBytesUniCast(connRequest.hpaiCtrl().ipAddress(), connRequest.hpaiCtrl().ipPortNumber(), connRes.data(), connRes.totalLength());
                 return;
             }
 
             if(connRequest.cri().type() == DEVICE_MGMT_CONNECTION)
-            {
-                tun->ChannelIdConfig = _lastChannelId++;
-            } else {
-                tun->ChannelId = _lastChannelId++;
-            }
-
+                tun->IsConfig = true;
+            tun->ChannelId = _lastChannelId++;
             tun->lastHeartbeat = millis();
             if(_lastChannelId == 0)
                 _lastChannelId++;
 
     #ifdef KNX_LOG_TUNNELING
             print("Neuer Tunnel: 0x");
-            print((connRequest.cri().type() == TUNNEL_CONNECTION) ? tun->ChannelId : tun->ChannelIdConfig, 16);
+            print(tun->ChannelId, 16);
             print("/");
             print(tun->IndividualAddress >> 12);
             print(".");
@@ -286,13 +327,8 @@ void IpDataLinkLayer::loop()
             tun->PortData = connRequest.hpaiData().ipPortNumber();
             tun->PortCtrl = connRequest.hpaiCtrl().ipPortNumber();
 
-            print("Port: ");
-            println(tun->PortCtrl);
-
-            KnxIpConnectResponse connRes(_ipParameters, tun->IndividualAddress, 3671, ((connRequest.cri().type() == TUNNEL_CONNECTION) ? tun->ChannelId : tun->ChannelIdConfig), connRequest.cri().type());
-            bool x = _platform.sendBytesUniCast(tun->IpAddress, tun->PortCtrl, connRes.data(), connRes.totalLength());
-            print("Sent response ");
-            println(x);
+            KnxIpConnectResponse connRes(_ipParameters, tun->IndividualAddress, 3671, tun->ChannelId, connRequest.cri().type());
+            _platform.sendBytesUniCast(tun->IpAddress, tun->PortCtrl, connRes.data(), connRes.totalLength());
             break;
         }
 
@@ -336,13 +372,13 @@ void IpDataLinkLayer::loop()
         case DisconnectRequest:
         {
             KnxIpDisconnectRequest discReq(buffer, len);
-            print("Channel ID: ");
+            print("Disconnect Channel ID: ");
             println(discReq.channelId());
             
             KnxIpTunnelConnection *tun = nullptr;
             for(int i = 0; i < KNX_TUNNELING; i++)
             {
-                if(tunnels[i].ChannelId == discReq.channelId() || tunnels[i].ChannelIdConfig == discReq.channelId())
+                if(tunnels[i].ChannelId == discReq.channelId())
                 {
                     tun = &tunnels[i];
                     break;
@@ -361,13 +397,9 @@ void IpDataLinkLayer::loop()
             }
 
 
-            KnxIpDisconnectResponse discRes(((tun->ChannelId == discReq.channelId()) ? tun->ChannelId : tun->ChannelIdConfig), E_NO_ERROR);
+            KnxIpDisconnectResponse discRes(tun->ChannelId, E_NO_ERROR);
             _platform.sendBytesUniCast(discReq.hpaiCtrl().ipAddress(), discReq.hpaiCtrl().ipPortNumber(), discRes.data(), discRes.totalLength());
-            
-            if(tun->ChannelId == discReq.channelId())
-                tun->Reset();
-            else
-                tun->ChannelIdConfig = 0;
+            tun->Reset();
             break;;
         }
 
@@ -386,7 +418,7 @@ void IpDataLinkLayer::loop()
             KnxIpTunnelConnection *tun = nullptr;
             for(int i = 0; i < KNX_TUNNELING; i++)
             {
-                if(tunnels[i].ChannelIdConfig == confReq.connectionHeader().channelId())
+                if(tunnels[i].ChannelId == confReq.connectionHeader().channelId())
                 {
                     tun = &tunnels[i];
                     break;
@@ -395,16 +427,24 @@ void IpDataLinkLayer::loop()
 
             if(tun == nullptr)
             {
-    #ifdef KNX_LOG_TUNNELING
                 print("Channel ID nicht gefunden: ");
                 println(confReq.connectionHeader().channelId());
-    #endif
                 KnxIpStateResponse stateRes(0x00, E_CONNECTION_ID);
                 //TODO where to send?
-                _platform.sendBytesUniCast(tun->IpAddress, tun->PortCtrl, stateRes.data(), stateRes.totalLength());
+                //_platform.sendBytesUniCast(tun->IpAddress, tun->PortCtrl, stateRes.data(), stateRes.totalLength());
                 return;
             }
+
+            KnxIpTunnelingAck tunnAck;
+            tunnAck.serviceTypeIdentifier(DeviceConfigurationAck);
+            tunnAck.connectionHeader().length(4);
+            tunnAck.connectionHeader().channelId(tun->ChannelId);
+            tunnAck.connectionHeader().sequenceCounter(confReq.connectionHeader().sequenceCounter());
+            tunnAck.connectionHeader().status(E_NO_ERROR);
+            _platform.sendBytesUniCast(tun->IpAddress, tun->PortData, tunnAck.data(), tunnAck.totalLength());
+
             tun->lastHeartbeat = millis();
+            println("sent config request");
             _cemiServer->frameReceived(confReq.frame());
             break;
         }
@@ -478,6 +518,13 @@ void IpDataLinkLayer::loop()
             return;
         }
 
+        case DeviceConfigurationAck:
+        {
+            //TOOD nothing to do now
+            //println("got Ack");
+            break;
+        }
+
         case TunnelingAck:
         {
             //TOOD nothing to do now
@@ -501,29 +548,6 @@ void IpDataLinkLayer::enabled(bool value)
     if (value && !_enabled)
     {
         _platform.setupMultiCast(_ipParameters.propertyValue<uint32_t>(PID_ROUTING_MULTICAST_ADDRESS), KNXIP_MULTICAST_PORT);
-#ifdef KNX_TUNNELING
-//TODO USE PID 53
-        uint16_t addr = _ipParameters.propertyValue<uint16_t>(PID_KNX_INDIVIDUAL_ADDRESS);
-        //uint8_t *addr = _ipParameters.propertyValue<uint8_t*>(PID_ADDITIONAL_INDIVIDUAL_ADDRESSES);
-        for(int i = 0; i < KNX_TUNNELING; i++)
-        {
-            if((addr & 0xFF) == 255)
-            {
-                println("Es sind keine Adressen mehr frei für einen Tunnel!");
-                break;
-            }
-            tunnels[i].IndividualAddress = ++addr;
-    #ifdef KNX_LOG_TUNNELING
-            print("Tunneling address: ");
-            print(tunnels[i].IndividualAddress >> 12);
-            print(".");
-            print((tunnels[i].IndividualAddress >> 8) & 0xF);
-            print(".");
-            println(tunnels[i].IndividualAddress & 0xFF);
-    #endif
-
-        }
-#endif
         _enabled = true;
         return;
     }
