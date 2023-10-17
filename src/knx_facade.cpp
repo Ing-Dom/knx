@@ -59,7 +59,13 @@
         #elif MASK_VERSION == 0x27B0
             KnxFacade<RP2040ArduinoPlatform, Bau27B0> knx(buttonEvent);
         #elif MASK_VERSION == 0x57B0
-            KnxFacade<RP2040EthArduinoPlatform, Bau57B0> knx(buttonEvent);
+            #if defined(KNX_ETH_GEN)
+                KnxFacade<RP2040EthArduinoPlatform, Bau57B0> knx(buttonEvent);
+            #elif defined(KNX_WIFI)
+                KnxFacade<RP2040WifiArduinoPlatform, Bau57B0> knx(buttonEvent);
+            #else
+                #error "no IP stack defined (#define KNX_WIFI or KNX_ETH_GEN)"
+            #endif
         #elif MASK_VERSION == 0x2920
             KnxFacade<RP2040ArduinoPlatform, Bau2920> knx(buttonEvent);
         #elif MASK_VERSION == 0x091A
