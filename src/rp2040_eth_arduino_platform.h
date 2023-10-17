@@ -38,7 +38,7 @@ public:
   protected:
 
     WiFiUDP _udp;
-    WiFiUDP _udp_uni;
+    //WiFiUDP _udp_uni;
     bool _unicast_socket_setup = false;
     IPAddress mcastaddr;
     uint16_t _port;

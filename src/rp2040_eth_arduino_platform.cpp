@@ -113,13 +113,13 @@ bool RP2040EthArduinoPlatform::sendBytesUniCast(uint32_t addr, uint16_t port, ui
     println(ucastaddr.toString().c_str());
 #endif
 
-    if(!_unicast_socket_setup)
-        _unicast_socket_setup =_udp_uni.begin(3671);
+    //if(!_unicast_socket_setup)
+    //    _unicast_socket_setup =_udp_uni.begin(3671);
 
-    if (_udp_uni.beginPacket(ucastaddr, port) == 1)
+    if (_udp.beginPacket(ucastaddr, port) == 1)
     {
-        _udp_uni.write(buffer, len);
-        if (_udp_uni.endPacket() == 0)
+        _udp.write(buffer, len);
+        if (_udp.endPacket() == 0)
             println("sendBytesUniCast endPacket fail");
     }
     else
