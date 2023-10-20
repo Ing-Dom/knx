@@ -13,7 +13,14 @@ by Earl E. Philhower III https://github.com/earlephilhower/arduino-pico
 
 ----------------------------------------------------*/
 
+
+
+
 #include "rp2040_ip_arduino_platform.h"
+
+#if ARDUINO_PICO_MAJOR * 10000 + ARDUINO_PICO_MINOR * 100 + ARDUINO_PICO_REVISION < 30600
+#pragma error "arduino-pico >= 3.6.0 needed"
+#endif
 
 #if defined(ARDUINO_ARCH_RP2040)
 #include "knx/bits.h"
