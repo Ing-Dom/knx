@@ -18,8 +18,7 @@
         void buttonUp();
     #endif
 #elif defined(ARDUINO_ARCH_RP2040)
-    #include "rp2040_eth_arduino_platform.h"
-    #include "rp2040_wifi_arduino_platform.h"
+    #include "rp2040_ip_arduino_platform.h"
     #ifndef KNX_NO_AUTOMATIC_GLOBAL_INSTANCE
         void buttonUp();
     #endif
@@ -484,23 +483,11 @@ template <class P, class B> class KnxFacade : private SaveRestore
         #elif MASK_VERSION == 0x27B0
             extern KnxFacade<RP2040ArduinoPlatform, Bau27B0> knx;
         #elif MASK_VERSION == 0x57B0
-            #if defined(KNX_ETH_GEN)
-                extern KnxFacade<RP2040EthArduinoPlatform, Bau57B0> knx;
-            #elif defined(KNX_WIFI)
-                extern KnxFacade<RP2040WifiArduinoPlatform, Bau57B0> knx;
-            #else
-                #error "no IP stack defined (#define KNX_WIFI or KNX_ETH_GEN)"
-            #endif
+            extern KnxFacade<RP2040IpArduinoPlatform, Bau57B0> knx;
         #elif MASK_VERSION == 0x2920
             extern KnxFacade<RP2040ArduinoPlatform, Bau2920> knx;
         #elif MASK_VERSION == 0x091A
-            #if defined(KNX_ETH_GEN)
-                extern KnxFacade<RP2040EthArduinoPlatform, Bau091A> knx;
-            #elif defined(KNX_WIFI)
-                extern KnxFacade<RP2040WifiArduinoPlatform, Bau091A> knx;
-            #else
-                #error "no IP stack defined (#define KNX_WIFI or KNX_ETH_GEN)"
-            #endif
+            extern KnxFacade<RP2040IpArduinoPlatform, Bau091A> knx;
         #else
             #error "Mask version not supported on ARDUINO_ARCH_RP2040"
         #endif

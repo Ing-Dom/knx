@@ -6,23 +6,29 @@
 
 
 
+#if defined(ARDUINO_ARCH_RP2040)
 
-#if defined(ARDUINO_ARCH_RP2040) && defined(KNX_WIFI)
+#ifdef KNX_IP_W5500
 
+#define KNX_NETIF Eth
+#include "SPI.h"
+#include <W5500lwIP.h>
+
+#elif defined(KNX_IP_WIFI)
+
+#define KNX_NETIF WiFi
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
-#ifdef FUCK_LDF
-#include "ldf_s_crap.h"
 #endif
 
 
-class RP2040WifiArduinoPlatform : public RP2040ArduinoPlatform
+class RP2040IpArduinoPlatform : public RP2040ArduinoPlatform
 {
 public:
 
-    RP2040WifiArduinoPlatform();
-    RP2040WifiArduinoPlatform( HardwareSerial* s);
+    RP2040IpArduinoPlatform();
+    RP2040IpArduinoPlatform( HardwareSerial* s);
 
 
     uint32_t currentIpAddress() override;
@@ -42,9 +48,9 @@ public:
   protected:
 
     WiFiUDP _udp;
-    WiFiUDP _udp_uni;
     IPAddress mcastaddr;
     uint16_t _port;
+    uint8_t _macaddr[6];
 
 };
 
