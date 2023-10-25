@@ -22,6 +22,8 @@ class DataLinkLayer
     void dataRequestFromTunnel(CemiFrame& frame);
 #ifdef KNX_TUNNELING
     virtual void dataRequestToTunnel(CemiFrame& frame);
+    virtual void dataConfirmationToTunnel(CemiFrame& frame);
+    virtual void dataIndicationToTunnel(CemiFrame& frame);
 #endif
 #endif
 

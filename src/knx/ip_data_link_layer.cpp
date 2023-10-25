@@ -54,7 +54,7 @@ void IpDataLinkLayer::dataRequestToTunnel(CemiFrame& frame)
     if(frame.addressType() == AddressType::GroupAddress)
     {
         for(int i = 0; i < KNX_TUNNELING; i++)
-            if(tunnels[i].ChannelId != 0)
+            if(tunnels[i].ChannelId != 0 && tunnels[i].IndividualAddress == frame.sourceAddress())
                 sendFrameToTunnel(&tunnels[i], frame);
                 //TODO check if source is from tunnel
         return;
@@ -63,6 +63,105 @@ void IpDataLinkLayer::dataRequestToTunnel(CemiFrame& frame)
     KnxIpTunnelConnection *tun = nullptr;
     for(int i = 0; i < KNX_TUNNELING; i++)
     {
+        if(tunnels[i].IndividualAddress == frame.sourceAddress())
+            continue;
+
+        if(tunnels[i].IndividualAddress == frame.destinationAddress())
+        {
+            tun = &tunnels[i];
+            break;
+        }
+    }
+
+    if(tun == nullptr)
+    {
+        for(int i = 0; i < KNX_TUNNELING; i++)
+        {
+            if(tunnels[i].IsConfig)
+            {
+                println("Found config Channel");
+                tun = &tunnels[i];
+                break;
+            }
+        }
+    }
+
+    if(tun == nullptr)
+    {
+        print("Found no Tunnel for IA: ");
+        println(frame.destinationAddress(), 16);
+        return;
+    }
+
+    sendFrameToTunnel(tun, frame);
+}
+
+void IpDataLinkLayer::dataConfirmationToTunnel(CemiFrame& frame)
+{
+    println("dataConfirmationToTunnel");
+    if(frame.addressType() == AddressType::GroupAddress)
+    {
+        for(int i = 0; i < KNX_TUNNELING; i++)
+            if(tunnels[i].ChannelId != 0 && tunnels[i].IndividualAddress == frame.sourceAddress())
+                sendFrameToTunnel(&tunnels[i], frame);
+                //TODO check if source is from tunnel
+        return;
+    }
+
+    KnxIpTunnelConnection *tun = nullptr;
+    for(int i = 0; i < KNX_TUNNELING; i++)
+    {
+        if(tunnels[i].IndividualAddress == frame.destinationAddress())
+            continue;
+            
+        if(tunnels[i].IndividualAddress == frame.sourceAddress())
+        {
+            tun = &tunnels[i];
+            break;
+        }
+    }
+
+    if(tun == nullptr)
+    {
+        for(int i = 0; i < KNX_TUNNELING; i++)
+        {
+            if(tunnels[i].IsConfig)
+            {
+                println("Found config Channel");
+                tun = &tunnels[i];
+                break;
+            }
+        }
+    }
+
+    if(tun == nullptr)
+    {
+        print("Found no Tunnel for IA: ");
+        println(frame.destinationAddress(), 16);
+        return;
+    }
+
+    sendFrameToTunnel(tun, frame);
+}
+
+void IpDataLinkLayer::dataIndicationToTunnel(CemiFrame& frame)
+{
+    println("dataIndicationToTunnel");
+    if(frame.addressType() == AddressType::GroupAddress)
+    {
+        for(int i = 0; i < KNX_TUNNELING; i++)
+            if(tunnels[i].ChannelId != 0 && tunnels[i].IndividualAddress == frame.sourceAddress())
+                sendFrameToTunnel(&tunnels[i], frame);
+                //TODO check if source is from tunnel
+        return;
+    }
+
+    KnxIpTunnelConnection *tun = nullptr;
+    for(int i = 0; i < KNX_TUNNELING; i++)
+    {
+        if(tunnels[i].IndividualAddress == frame.sourceAddress())
+            continue;
+            
         if(tunnels[i].IndividualAddress == frame.destinationAddress())
         {
             tun = &tunnels[i];

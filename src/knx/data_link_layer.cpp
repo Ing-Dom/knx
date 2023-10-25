@@ -23,6 +23,16 @@ void DataLinkLayer::dataRequestToTunnel(CemiFrame& frame)
     println("default dataRequestToTunnel");
 }
 
+void DataLinkLayer::dataConfirmationToTunnel(CemiFrame& frame)
+{
+    println("default dataConfirmationToTunnel");
+}
+
+void DataLinkLayer::dataIndicationToTunnel(CemiFrame& frame)
+{
+    println("default dataIndicationToTunnel");
+}
+
 void DataLinkLayer::dataRequestFromTunnel(CemiFrame& frame)
 {
     _cemiServer->dataConfirmationToTunnel(frame);
@@ -101,8 +111,9 @@ void DataLinkLayer::frameReceived(CemiFrame& frame)
 
 #ifdef USE_CEMI_SERVER
     // Do not send our own message back to the tunnel
-#ifdef KNX_TUNNELINGendif
+#ifdef KNX_TUNNELING
     //we dont need to check it here
+    println("dataIndicationToTunnel");
     _cemiServer->dataIndicationToTunnel(frame);
 #else
     if (frame.sourceAddress() != _cemiServer->clientAddress())
