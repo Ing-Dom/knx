@@ -50,7 +50,6 @@ bool IpDataLinkLayer::sendFrame(CemiFrame& frame)
 #ifdef KNX_TUNNELING
 void IpDataLinkLayer::dataRequestToTunnel(CemiFrame& frame)
 {
-    println("dataRequestToTunnel");
     if(frame.addressType() == AddressType::GroupAddress)
     {
         for(int i = 0; i < KNX_TUNNELING; i++)
@@ -88,8 +87,10 @@ void IpDataLinkLayer::dataRequestToTunnel(CemiFrame& frame)
 
     if(tun == nullptr)
     {
+#ifdef KNX_LOG_TUNNELING
         print("Found no Tunnel for IA: ");
         println(frame.destinationAddress(), 16);
+#endif
         return;
     }
 
@@ -98,7 +99,6 @@ void IpDataLinkLayer::dataRequestToTunnel(CemiFrame& frame)
 
 void IpDataLinkLayer::dataConfirmationToTunnel(CemiFrame& frame)
 {
-    println("dataConfirmationToTunnel");
     if(frame.addressType() == AddressType::GroupAddress)
     {
         for(int i = 0; i < KNX_TUNNELING; i++)
@@ -136,8 +136,10 @@ void IpDataLinkLayer::dataConfirmationToTunnel(CemiFrame& frame)
 
     if(tun == nullptr)
     {
+#ifdef KNX_LOG_TUNNELING
         print("Found no Tunnel for IA: ");
         println(frame.destinationAddress(), 16);
+#endif
         return;
     }
 
@@ -146,7 +148,6 @@ void IpDataLinkLayer::dataConfirmationToTunnel(CemiFrame& frame)
 
 void IpDataLinkLayer::dataIndicationToTunnel(CemiFrame& frame)
 {
-    println("dataIndicationToTunnel");
     if(frame.addressType() == AddressType::GroupAddress)
     {
         for(int i = 0; i < KNX_TUNNELING; i++)
@@ -184,8 +185,10 @@ void IpDataLinkLayer::dataIndicationToTunnel(CemiFrame& frame)
 
     if(tun == nullptr)
     {
+#ifdef KNX_LOG_TUNNELING
         print("Found no Tunnel for IA: ");
         println(frame.destinationAddress(), 16);
+#endif
         return;
     }
 
@@ -375,7 +378,7 @@ void IpDataLinkLayer::loop()
                     popWord(pa2, addresses + (x*2));
                     if(i != x && pa == pa2)
                     {
-                        hasDoublePA = false;
+                        hasDoublePA = true;
                         break;
                     }
                 }
@@ -390,8 +393,8 @@ void IpDataLinkLayer::loop()
                 if(isInUse)
                     continue;
 
-                if(!hasDoublePA)
-                    print("Not Unique ");
+                if(hasDoublePA)
+                    println("Not Unique ");
                 tun->IndividualAddress = pa;
                 break;
             }
@@ -471,8 +474,11 @@ void IpDataLinkLayer::loop()
         case DisconnectRequest:
         {
             KnxIpDisconnectRequest discReq(buffer, len);
+            
+#ifdef KNX_LOG_TUNNELING
             print("Disconnect Channel ID: ");
             println(discReq.channelId());
+#endif
             
             KnxIpTunnelConnection *tun = nullptr;
             for(int i = 0; i < KNX_TUNNELING; i++)

@@ -113,7 +113,6 @@ void DataLinkLayer::frameReceived(CemiFrame& frame)
     // Do not send our own message back to the tunnel
 #ifdef KNX_TUNNELING
     //we dont need to check it here
-    println("dataIndicationToTunnel");
     _cemiServer->dataIndicationToTunnel(frame);
 #else
     if (frame.sourceAddress() != _cemiServer->clientAddress())

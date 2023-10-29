@@ -47,17 +47,18 @@ void CemiServer::clientAddress(uint16_t value)
 
 void CemiServer::dataConfirmationToTunnel(CemiFrame& frame)
 {
-    println("dataConfirmationToTunnel");
     MessageCode backupMsgCode = frame.messageCode();
 
     frame.messageCode(L_data_con);
 
+#ifdef KNX_LOG_TUNNELING
     print("L_data_con: src: ");
     print(frame.sourceAddress(), HEX);
     print(" dst: ");
     print(frame.destinationAddress(), HEX);
 
     printHex(" frame: ", frame.data(), frame.dataLength());
+#endif
 
 #ifdef USE_USB
     _usbTunnelInterface.sendCemiFrame(frame);
@@ -70,7 +71,6 @@ void CemiServer::dataConfirmationToTunnel(CemiFrame& frame)
 
 void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
 {
-    println("dataIndicationToTunnel");
 #ifdef USE_RF
     bool isRf = _dataLinkLayer->mediumType() == DptMedium::KNX_RF;
     uint8_t data[frame.dataLength() + (isRf ? 10 : 0)];
@@ -100,12 +100,14 @@ void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
 
     CemiFrame tmpFrame(data, sizeof(data));
 
+#ifdef KNX_LOG_TUNNELING
     print("L_data_ind: src: ");
     print(tmpFrame.sourceAddress(), HEX);
     print(" dst: ");
     print(tmpFrame.destinationAddress(), HEX);
 
     printHex(" frame: ", tmpFrame.data(), tmpFrame.dataLength());
+#endif
     tmpFrame.apdu().type();
 
 #ifdef USE_USB
@@ -117,7 +119,6 @@ void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
 
 void CemiServer::frameReceived(CemiFrame& frame)
 {
-    println("cemi frame received");
 #ifdef USE_RF
     bool isRf = _dataLinkLayer->mediumType() == DptMedium::KNX_RF;
 #endif
