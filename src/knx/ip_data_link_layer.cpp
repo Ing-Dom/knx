@@ -151,9 +151,8 @@ void IpDataLinkLayer::dataIndicationToTunnel(CemiFrame& frame)
     if(frame.addressType() == AddressType::GroupAddress)
     {
         for(int i = 0; i < KNX_TUNNELING; i++)
-            if(tunnels[i].ChannelId != 0 && tunnels[i].IndividualAddress == frame.sourceAddress())
+            if(tunnels[i].ChannelId != 0 && tunnels[i].IndividualAddress != frame.sourceAddress())
                 sendFrameToTunnel(&tunnels[i], frame);
-                //TODO check if source is from tunnel
         return;
     }
 

@@ -101,6 +101,7 @@ void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
     CemiFrame tmpFrame(data, sizeof(data));
 
 #ifdef KNX_LOG_TUNNELING
+    print("ToTunnel ");
     print("L_data_ind: src: ");
     print(tmpFrame.sourceAddress(), HEX);
     print(" dst: ");
