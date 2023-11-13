@@ -46,7 +46,7 @@ class TpUartDataLinkLayer : public DataLinkLayer
     uint32_t _lastByteRxTime;
     uint32_t _lastByteTxTime;
     uint32_t _lastLoopTime;
-    uint32_t _waitConfirmStartTime;
+    uint32_t _waitConfirmStartTime = 0;
     uint32_t _lastResetChipTime = 0;
     uint8_t _repetitionsBusy = 3;
     uint8_t _repetitionsNack = 3;
@@ -73,6 +73,7 @@ class TpUartDataLinkLayer : public DataLinkLayer
     void dataConBytesReceived(uint8_t* buffer, uint16_t length, bool success);
     void enterRxWaitEOP();
     bool resetChip();
+    bool resetChipTick();
     void stopChip();
 
     ITpUartCallBacks& _cb;

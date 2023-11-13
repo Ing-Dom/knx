@@ -11,7 +11,7 @@ enum NmReadSerialNumberType
     NM_Read_SerialNumber_By_ManufacturerSpecific = 0xFE,
 };
 
-static constexpr auto kFunctionPropertyResultBufferMaxSize = 64;
+static constexpr auto kFunctionPropertyResultBufferMaxSize = 0xFF;
 static constexpr auto kRestartProcessTime = 3;
 
 BauSystemB::BauSystemB(Platform& platform): _memory(platform, _deviceObj),
@@ -410,8 +410,8 @@ void BauSystemB::functionPropertyStateIndication(Priority priority, HopCountType
                     handled = true;
         }
     } else {
-        if(_functionProperty != 0)
-            if(_functionProperty(objectIndex, propertyId, length, data, resultData, resultLength))
+        if(_functionPropertyState != 0)
+            if(_functionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength))
                 handled = true;
     }
 
