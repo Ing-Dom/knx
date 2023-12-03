@@ -207,7 +207,7 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
     
     
 
-    if(addrType == AddressType::GroupAddress)
+    if(addrType == AddressType::GroupAddress && destination != 0)
     {
         if(destination < 0x7000) // Main group 0-13
         {
