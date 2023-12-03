@@ -204,7 +204,7 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
     
     
 
-    if(addrType == AddressType::GroupAddress)
+    if(addrType == AddressType::GroupAddress && destination != 0) // destination == 0 means broadcast and must not be filtered with the GroupAddresses
     {
         if(destination < 0x7000) // Main group 0-13
         {
