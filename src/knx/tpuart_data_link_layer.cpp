@@ -38,6 +38,7 @@
 #define U_INT_REG_WR_REQ     0x28
 #define U_INT_REG_RD_REQ     0x38
 #define U_POLLING_STATE_REQ  0xE0
+#define U_MXRSTCNT           0x24 // TP-UART only
 
 //knx transmit data commands
 #define U_L_DATA_START_CONT_REQ 0x80 //-0xBF
@@ -323,11 +324,7 @@ void TpUartDataLinkLayer::loop()
                             //check if individual or group address
                             bool isGroupAddress = (buffer[1] & 0x80) != 0;
                             uint16_t addr = getWord(buffer + 4);
-
-                            if (_cb.isAckRequired(addr, isGroupAddress))
-                            {
-                                c |= U_ACK_REQ_ADRESSED;
-                            }
+                            c |= _cb.isAckRequired(addr, isGroupAddress);
 
                             // Hint: We can send directly here, this doesn't disturb other transmissions
                             // We don't have to update _lastByteTxTime because after U_ACK_REQ the timing is not so tight
@@ -356,7 +353,7 @@ void TpUartDataLinkLayer::loop()
 
                     if (_RxByteCnt == buffer[6] + 7 + 2)
                     {
-                        //complete Frame received, payloadLength+1 for TCPI +1 for CRC
+                        //complete Frame received, payloadLength+1 for TCPI +1 for CRC (CRC is not added)
                         //check if crc is correct
                         if (rxByte == (uint8_t)(~_xorSum))
                         {
@@ -367,7 +364,7 @@ void TpUartDataLinkLayer::loop()
 #ifdef DBG_TRACE
                                 unsigned long runTime = millis();
 #endif
-                                frameBytesReceived(_receiveBuffer, _RxByteCnt + 2);
+                                frameBytesReceived(_receiveBuffer, _RxByteCnt + 1);
 #ifdef DBG_TRACE
                                 runTime = millis() - runTime;
                                 if (runTime > (OVERRUN_COUNT*14)/10)
@@ -531,6 +528,24 @@ void TpUartDataLinkLayer::stopChip()
         if (resp == U_STOP_MODE_IND)
             break;
     }
+#endif
+}
+
+void TpUartDataLinkLayer::setFrameRepetition(uint8_t nack, uint8_t busy)
+{
+    if(_repetitionsNack == nack && _repetitionsBusy == busy)
+        return;
+    _repetitionsNack = nack;
+    _repetitionsBusy = busy;
+
+#ifdef NCN5120
+    _platform.writeUart(U_SET_REPETITION_REQ);
+    _platform.writeUart((nack & 0x7) | (busy & 0x7) << 4);
+    _platform.writeUart(0x0); //dummy, see NCN5120 datasheet
+    _platform.writeUart(0x0); //dummy, see NCN5120 datasheet
+#else
+    _platform.writeUart(U_MXRSTCNT);
+    _platform.writeUart((nack & 0x7) | (busy & 0x7) << 5);
 #endif
 }
 

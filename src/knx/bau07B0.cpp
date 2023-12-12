@@ -127,27 +127,30 @@ void Bau07B0::loop()
 #endif    
 }
 
-bool Bau07B0::isAckRequired(uint16_t address, bool isGrpAddr)
+TPAckType Bau07B0::isAckRequired(uint16_t address, bool isGrpAddr)
 {
     if (isGrpAddr)
     {
         // ACK for broadcasts
         if (address == 0)
-            return true;
+            return TPAckType::AckReqAck;
         // is group address in group address table? ACK if yes.
-        return _addrTable.contains(address);
+        if(_addrTable.contains(address))
+            return TPAckType::AckReqAck;
+        else
+            return TPAckType::AckReqNone;
     }
 
     // Also ACK for our own individual address
     if (address  == _deviceObj.individualAddress())
-        return true;
+        return TPAckType::AckReqAck;
 
     if (address == 0)
     {
         println("Invalid broadcast detected: destination address is 0, but address type is \"individual\"");
     }
 
-    return false;
+    return TPAckType::AckReqNone;
 }
 
 #endif

@@ -740,6 +740,20 @@ void ApplicationLayer::memoryReadResponse(AckType ack, Priority priority, HopCou
     memorySend(MemoryResponse, ack, priority, hopType, asap, secCtrl, number, memoryAddress, memoryData);
 }
 
+// Added EC
+void ApplicationLayer::memoryRouterReadResponse(AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl& secCtrl, uint8_t number,
+    uint16_t memoryAddress, uint8_t * memoryData)
+{
+    memoryRouterSend(MemoryRouterReadResponse, ack, priority, hopType, asap, secCtrl, number, memoryAddress, memoryData);
+}
+
+void ApplicationLayer::memoryRoutingTableReadResponse(AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl& secCtrl, uint8_t number,
+                            uint16_t memoryAddress, uint8_t * memoryData)
+{
+    memoryRoutingTableSend(RoutingTableReadResponse, ack, priority, hopType, asap, secCtrl, number, memoryAddress, memoryData);
+}
+//
+
 void ApplicationLayer::memoryExtReadResponse(AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl& secCtrl, ReturnCodes code,
                                              uint8_t number, uint32_t memoryAddress, uint8_t * memoryData)
 {
@@ -962,6 +976,36 @@ void ApplicationLayer::memorySend(ApduType type, AckType ack, Priority priority,
     individualSend(ack, hopType, priority, asap, apdu, secCtrl);
 }
 
+// Added EC
+void ApplicationLayer::memoryRouterSend(ApduType type, AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl& secCtrl, uint8_t number,
+    uint16_t memoryAddress, uint8_t * memoryData)
+{
+    CemiFrame frame(4 + number);
+    APDU& apdu = frame.apdu();
+    apdu.type(type);
+    uint8_t* data = apdu.data();
+    data[1] |= (number & 0xf);
+    pushWord(memoryAddress & 0xffff, data + 2);
+    if (number > 0)
+        memcpy(data + 4, memoryData, number);
+    individualSend(ack, hopType, priority, asap, apdu, secCtrl);
+}
+
+void ApplicationLayer::memoryRoutingTableSend(ApduType type, AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl& secCtrl, uint8_t number,
+    uint16_t memoryAddress, uint8_t * memoryData)
+{
+    CemiFrame frame(4 + number);
+    APDU& apdu = frame.apdu();
+    apdu.type(type);
+    uint8_t* data = apdu.data();
+    data[1] |= (number & 0xf);
+    pushWord(memoryAddress & 0xffff, data + 2);
+    if (number > 0)
+        memcpy(data + 4, memoryData, number);
+    individualSend(ack, hopType, priority, asap, apdu, secCtrl);
+}
+//
+
 void ApplicationLayer::userMemorySend(ApduType type, AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl& secCtrl, uint8_t number,
     uint32_t memoryAddress, uint8_t * memoryData)
 {
@@ -1097,8 +1141,30 @@ void ApplicationLayer::individualIndication(HopCountType hopType, Priority prior
         case MemoryWrite:
             _bau.memoryWriteIndication(priority, hopType, tsap, secCtrl, data[0] & 0x3f, getWord(data + 1), data + 3);
             break;
-        case MemoryExtRead:
-        {
+
+        // EC 
+        case MemoryRouterWrite:
+            print("MemoryRouterWrite: ");
+            _bau.memoryRouterWriteIndication(priority, hopType, tsap, secCtrl, data[1], getWord(data + 2), data + 4);
+            break;
+        case MemoryRouterReadResponse:
+            _bau.memoryRouterReadAppLayerConfirm(priority, hopType, tsap, secCtrl, data[1], getWord(data + 2), data + 4);
+            break;
+        case RoutingTableOpen:
+            println("Received OpenRoutingTable APDU, doing nothing");
+            break;
+        case RoutingTableRead:
+            _bau.memoryRoutingTableReadIndication(priority, hopType, tsap, secCtrl, data[1], getWord(data + 2));
+            break;
+        case RoutingTableReadResponse:
+            _bau.memoryRoutingTableReadAppLayerConfirm(priority, hopType, tsap, secCtrl, data[1], getWord(data + 2), data + 4);
+            break;
+        case RoutingTableWrite:
+            _bau.memoryRoutingTableWriteIndication(priority, hopType, tsap, secCtrl, data[1], getWord(data + 2), data + 4);
+            break;
+        // end EC
+
+        case MemoryExtRead: {
             uint8_t number = data[1];
             uint32_t memoryAddress =  ((data[2] & 0xff) << 16) | ((data[3] & 0xff) << 8) | (data[4] & 0xff);
             _bau.memoryExtReadIndication(priority, hopType, tsap, secCtrl, number, memoryAddress);
@@ -1162,7 +1228,7 @@ void ApplicationLayer::individualIndication(HopCountType hopType, Priority prior
         }
         default:
             print("Individual-indication: unhandled APDU-Type: ");
-            println(apdu.type());
+            apdu.printPDU();
     }
 }
 

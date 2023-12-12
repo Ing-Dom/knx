@@ -369,14 +369,22 @@ bool CemiFrame::valid() const
     uint8_t apduLen = _data[_data[1] + NPDU_LPDU_DIFF];
 
     if (_length != 0 && _length != (addInfoLen + apduLen + NPDU_LPDU_DIFF + 2))
+    {
+        print("length issue, length: ");
+        print(_length);
+        print(" expected length: ");
+        println(addInfoLen + apduLen + NPDU_LPDU_DIFF + 2);
+
         return false;
-    
+    }
     if ((_ctrl1[0] & 0x40) > 0 // Bit 6 has do be 0
         || (_ctrl1[1] & 0xF) > 0 // only standard or extended frames
         || _npdu.octetCount() == 0xFF // not allowed
         || (_npdu.octetCount() > 15 && frameType() == StandardFrame)
-        )
+        ){
+        print("Other issue");
         return false;
+        }
 
     return true;
 }

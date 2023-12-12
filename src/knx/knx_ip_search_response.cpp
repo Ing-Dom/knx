@@ -1,10 +1,15 @@
 #include "knx_ip_search_response.h"
 #ifdef USE_IP
 
-#define SERVICE_FAMILIES 2
+#define LEN_SERVICE_FAMILIES 2
+#if MASK_VERSION == 0x091A
+#define LEN_SERVICE_DIB (2 + 3 * LEN_SERVICE_FAMILIES)
+#else
+#define LEN_SERVICE_DIB (2 + 2 * LEN_SERVICE_FAMILIES)
+#endif
 
 KnxIpSearchResponse::KnxIpSearchResponse(IpParameterObject& parameters, DeviceObject& deviceObject)
-    : KnxIpFrame(LEN_KNXIP_HEADER + LEN_IPHPAI + LEN_DEVICE_INFORMATION_DIB + 2 + 2 * SERVICE_FAMILIES),
+    : KnxIpFrame(LEN_KNXIP_HEADER + LEN_IPHPAI + LEN_DEVICE_INFORMATION_DIB + LEN_SERVICE_DIB),
       _controlEndpoint(_data + LEN_KNXIP_HEADER), _deviceInfo(_data + LEN_KNXIP_HEADER + LEN_IPHPAI),
       _supportedServices(_data + LEN_KNXIP_HEADER + LEN_IPHPAI + LEN_DEVICE_INFORMATION_DIB)
 {
@@ -35,11 +40,13 @@ KnxIpSearchResponse::KnxIpSearchResponse(IpParameterObject& parameters, DeviceOb
     prop->read(1, LEN_FRIENDLY_NAME, friendlyName);
     _deviceInfo.friendlyName(friendlyName);
 
-    _supportedServices.length(2 + 2 * SERVICE_FAMILIES);
+    _supportedServices.length(LEN_SERVICE_DIB);
     _supportedServices.code(SUPP_SVC_FAMILIES);
     _supportedServices.serviceVersion(Core, 1);
     _supportedServices.serviceVersion(DeviceManagement, 1);
-//    _supportedServices.serviceVersion(Routing, 1);
+#if MASK_VERSION == 0x091A
+    _supportedServices.serviceVersion(Routing, 1);
+#endif
 }
 
 
