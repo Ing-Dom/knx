@@ -59,11 +59,11 @@
         #elif MASK_VERSION == 0x27B0
             KnxFacade<RP2040ArduinoPlatform, Bau27B0> knx(buttonEvent);
         #elif MASK_VERSION == 0x57B0
-            KnxFacade<RP2040IpArduinoPlatform, Bau57B0> knx(buttonEvent);
+            KnxFacade<RP2040ArduinoPlatform, Bau57B0> knx(buttonEvent);
         #elif MASK_VERSION == 0x2920
             KnxFacade<RP2040ArduinoPlatform, Bau2920> knx(buttonEvent);
         #elif MASK_VERSION == 0x091A
-            KnxFacade<RP2040IpArduinoPlatform, Bau091A> knx(buttonEvent);
+            KnxFacade<RP2040ArduinoPlatform, Bau091A> knx(buttonEvent);
         #else
             #error "Mask version not supported on ARDUINO_ARCH_RP2040"
         #endif
