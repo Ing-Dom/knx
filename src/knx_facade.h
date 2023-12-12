@@ -18,7 +18,7 @@
         void buttonUp();
     #endif
 #elif defined(ARDUINO_ARCH_RP2040)
-    #include "rp2040_ip_arduino_platform.h"
+    #include "rp2040_arduino_platform.h"
     #ifndef KNX_NO_AUTOMATIC_GLOBAL_INSTANCE
         void buttonUp();
     #endif
