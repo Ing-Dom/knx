@@ -49,15 +49,9 @@
 #define _ETG_LOGLEVEL_                      1
 #endif
 
-// set to true if you want to use SPI1, otherwise SPI is used.
-//#define ETHERNET_GENERIC_USING_SPI2                          false
 
 #define ETHERNET_USE_RPIPICO      true
-#define ETHERNET_LARGE_BUFFERS
-#include <Ethernet_Generic.hpp>
-#include <EthernetClient.h>             // https://github.com/khoih-prog/Ethernet_Generic
-#include <EthernetServer.h>             // https://github.com/khoih-prog/Ethernet_Generic
-#include <EthernetUdp.h>
+#include <Ethernet_Generic.hpp>             // https://github.com/khoih-prog/Ethernet_Generic
 
 
 #define KNX_NETIF Ethernet

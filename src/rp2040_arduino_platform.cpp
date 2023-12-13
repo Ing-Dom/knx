@@ -56,7 +56,6 @@ extern Wiznet5500lwIP KNX_NETIF;
 
 #endif
 
-
 RP2040ArduinoPlatform::RP2040ArduinoPlatform()
 #ifndef KNX_NO_DEFAULT_UART
     : ArduinoPlatform(&KNX_SERIAL)
