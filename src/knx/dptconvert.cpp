@@ -1008,7 +1008,7 @@ int valueToBusValueSigned16(const KNXValue& value, uint8_t* payload, size_t payl
     {
         if ((double)value < -327.68 || (double)value > 327.67)
             return false;
-        signed16ToPayload(payload, payload_length, 0, (double)value * 100.0, 0xFF);
+        signed16ToPayload(payload, payload_length, 0, (int16_t)((double)value * 100.0), 0xFFFF);
     }
     else
         signed16ToPayload(payload, payload_length, 0, (uint64_t)value, 0xffff);
@@ -1753,6 +1753,12 @@ void float16ToPayload(uint8_t* payload, size_t payload_length, int index, double
         exponent = ceil(log2(value) - 11.0);
     
     short mantissa = roundf(value / (1 << exponent));
+    // above calculation causes mantissa overflow for values of the form 2^n, where n>11
+    if (mantissa >= 0x800)
+    {
+        exponent++;
+        mantissa = roundf(value / (1 << exponent));
+    }
 
     if (wasNegative)
         mantissa *= -1;

@@ -84,20 +84,17 @@ void ApplicationLayer::dataGroupConfirm(AckType ack, HopCountType hopType, Prior
     case GroupValueRead:
         if (_savedAsapReadRequest > 0)
             _bau.groupValueReadLocalConfirm(ack, _savedAsapReadRequest, priority, hopType, secCtrl, status);
-        else 
-            println("dataGroupConfirm: APDU-Type GroupValueRead has _savedAsapReadRequest = 0");
+        _savedAsapReadRequest = 0;
         break;
     case GroupValueResponse:
         if (_savedAsapResponse > 0)
             _bau.groupValueReadResponseConfirm(ack, _savedAsapResponse, priority, hopType, secCtrl, apdu.data(), apdu.length() - 1, status);
-        else 
-            println("dataGroupConfirm: APDU-Type GroupValueResponse has _savedAsapResponse = 0");
+        _savedAsapResponse = 0;
         break;
     case GroupValueWrite:
         if (_savedAsapWriteRequest > 0)
             _bau.groupValueWriteLocalConfirm(ack, _savedAsapWriteRequest, priority, hopType, secCtrl, apdu.data(), apdu.length() - 1, status);
-        else 
-            println("dataGroupConfirm: APDU-Type GroupValueWrite has _savedAsapWriteRequest = 0");
+        _savedAsapWriteRequest = 0;
         break;
     default:
         print("datagroup-confirm: unhandled APDU-Type: ");
@@ -554,7 +551,7 @@ void ApplicationLayer::systemNetworkParameterReadResponse(Priority priority, Hop
 void ApplicationLayer::domainAddressSerialNumberReadResponse(Priority priority, HopCountType hopType, const SecurityControl &secCtrl, const uint8_t* rfDoA,
                                                              const uint8_t* knxSerialNumber)
 {
-    CemiFrame frame(13); 
+    CemiFrame frame(11); 
     APDU& apdu = frame.apdu();
     apdu.type(DomainAddressSerialNumberResponse);
 
