@@ -9,6 +9,7 @@
 #include "function_property.h"
 #include "log_knx.h"
 
+
 // Filter Table Realization Type 3
 // The Filter Table Realisation Type 3 shall be organised as a memory mapped bit-field of
 // 65536 bits and thus 8 192 octets. Each bit shall uniquely correspond to one Group Address.

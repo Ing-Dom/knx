@@ -112,7 +112,6 @@ void BauSystemB::deviceDescriptorReadIndication(Priority priority, HopCountType 
     pushWord(_deviceObj.maskVersion(), data);
     applicationLayer().deviceDescriptorReadResponse(AckRequested, priority, hopType, asap, secCtrl, descriptorType, data);
 }
-// Added EC
 void BauSystemB::memoryRouterWriteIndication(Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl &secCtrl, uint8_t number,
                                              uint16_t memoryAddress, uint8_t *data)
 {
@@ -158,7 +157,6 @@ void BauSystemB::memoryRoutingTableWriteIndication(Priority priority, HopCountTy
         memoryRoutingTableReadIndication(priority, hopType, asap, secCtrl, number, memoryAddress, data);
 }
 
-//
 void BauSystemB::memoryWriteIndication(Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl &secCtrl, uint8_t number,
     uint16_t memoryAddress, uint8_t * data)
 {
