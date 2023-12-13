@@ -400,7 +400,7 @@ void IpDataLinkLayer::loop()
 
             if(tun == nullptr)
             {
-                println("Kein freier Tunnel verfÃ¼gbar");
+                println("Kein freier Tunnel verfügbar");
                 KnxIpConnectResponse connRes(0x00, E_NO_MORE_CONNECTIONS);
                 _platform.sendBytesUniCast(connRequest.hpaiCtrl().ipAddress(), connRequest.hpaiCtrl().ipPortNumber(), connRes.data(), connRes.totalLength());
                 return;
@@ -637,7 +637,7 @@ void IpDataLinkLayer::loop()
         }
 #endif
         default:
-#ifdef KNX_LOG_TUNNELING
+#if defined(KNX_LOG_TUNNELING) || defined(KNX_LOG_IP)
             print("Unhandled service identifier: ");
             println(code, HEX);
 #endif
