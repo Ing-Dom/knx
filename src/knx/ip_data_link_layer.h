@@ -34,6 +34,12 @@ class IpDataLinkLayer : public DataLinkLayer
     bool sendFrame(CemiFrame& frame);
 #ifdef KNX_TUNNELING
     void sendFrameToTunnel(KnxIpTunnelConnection *tunnel, CemiFrame& frame);
+    void loopHandleConnectRequest(uint8_t* buffer, uint16_t length);
+    void loopHandleConnectionStateRequest(uint8_t* buffer, uint16_t length);
+    void loopHandleDisconnectRequest(uint8_t* buffer, uint16_t length);
+    void loopHandleDescriptionRequest(uint8_t* buffer, uint16_t length);
+    void loopHandleDeviceConfigurationRequest(uint8_t* buffer, uint16_t length);
+    void loopHandleTunnelingRequest(uint8_t* buffer, uint16_t length);
 #endif
     bool sendBytes(uint8_t* buffer, uint16_t length);
     bool isSendLimitReached();
