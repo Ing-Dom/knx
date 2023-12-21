@@ -5,17 +5,12 @@
 
 #if defined(__linux__)
 #include <arpa/inet.h>
-#elif defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_STM32) || defined (DeviceFamily_CC13X0)
-
-#if MASK_VERSION == 0x091A || MASK_VERSION == 0x57B0
-#include <lwip/def.h>
-#else
+#elif defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_STM32) || defined (DeviceFamily_CC13X0)
 #define getbyte(x,n) (*(((uint8_t*)&(x))+n))
 #define htons(x)  ( (getbyte(x,0)<<8) | getbyte(x,1) ) 
 #define htonl(x) ( (getbyte(x,0)<<24) | (getbyte(x,1)<<16) | (getbyte(x,2)<<8) | getbyte(x,3) )
 #define ntohs(x) htons(x)
 #define ntohl(x) htonl(x)
-#endif
 #endif
 
 #ifndef MIN
@@ -97,6 +92,14 @@ void printHex(const char* suffix, const uint8_t *data, size_t length, bool newli
 #define print(...)      do {} while(0)
 #define println(...)    do {} while(0)
 #define printHex(...)   do {} while(0)
+#endif
+
+#ifdef KNX_ACTIVITYCALLBACK
+#define KNX_ACTIVITYCALLBACK_DIR 0x00
+#define KNX_ACTIVITYCALLBACK_DIR_RECV 0x00
+#define KNX_ACTIVITYCALLBACK_DIR_SEND 0x01
+#define KNX_ACTIVITYCALLBACK_IPUNICAST 0x02
+#define KNX_ACTIVITYCALLBACK_NET 0x04
 #endif
 
 const uint8_t* popByte(uint8_t& b, const uint8_t* data);
