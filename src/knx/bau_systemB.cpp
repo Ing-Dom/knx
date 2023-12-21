@@ -11,7 +11,7 @@ enum NmReadSerialNumberType
     NM_Read_SerialNumber_By_ManufacturerSpecific = 0xFE,
 };
 
-static constexpr auto kFunctionPropertyResultBufferMaxSize = 64;
+static constexpr auto kFunctionPropertyResultBufferMaxSize = 0xFF;
 static constexpr auto kRestartProcessTime = 3;
 
 BauSystemB::BauSystemB(Platform& platform): _memory(platform, _deviceObj),
@@ -112,7 +112,6 @@ void BauSystemB::deviceDescriptorReadIndication(Priority priority, HopCountType 
     pushWord(_deviceObj.maskVersion(), data);
     applicationLayer().deviceDescriptorReadResponse(AckRequested, priority, hopType, asap, secCtrl, descriptorType, data);
 }
-// Added EC
 void BauSystemB::memoryRouterWriteIndication(Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl &secCtrl, uint8_t number,
                                              uint16_t memoryAddress, uint8_t *data)
 {
@@ -158,7 +157,6 @@ void BauSystemB::memoryRoutingTableWriteIndication(Priority priority, HopCountTy
         memoryRoutingTableReadIndication(priority, hopType, asap, secCtrl, number, memoryAddress, data);
 }
 
-//
 void BauSystemB::memoryWriteIndication(Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl &secCtrl, uint8_t number,
     uint16_t memoryAddress, uint8_t * data)
 {
@@ -410,8 +408,8 @@ void BauSystemB::functionPropertyStateIndication(Priority priority, HopCountType
                     handled = true;
         }
     } else {
-        if(_functionProperty != 0)
-            if(_functionProperty(objectIndex, propertyId, length, data, resultData, resultLength))
+        if(_functionPropertyState != 0)
+            if(_functionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength))
                 handled = true;
     }
 

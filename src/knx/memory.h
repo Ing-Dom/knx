@@ -66,7 +66,6 @@ class Memory
     MemoryBlock* findBlockInList(MemoryBlock* head, uint8_t* address);
     void addNewUsedBlock(uint8_t* address, size_t size);
 
-
     void readEraseBlockToBuffer(uint32_t blockNum);
     uint8_t* eraseBlockStart(uint32_t blockNum);
     uint8_t* eraseBlockEnd(uint32_t blockNum);

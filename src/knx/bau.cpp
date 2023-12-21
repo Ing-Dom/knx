@@ -191,7 +191,6 @@ void BusAccessUnit::memoryWriteIndication(Priority priority, HopCountType hopTyp
 {
 }
 
-// Added EC
 void BusAccessUnit::memoryRouterWriteIndication(Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl &secCtrl, uint8_t number, uint16_t memoryAddress, uint8_t* data)
 {
 }
@@ -207,8 +206,6 @@ void BusAccessUnit::memoryRoutingTableReadAppLayerConfirm(Priority priority, Hop
 void BusAccessUnit::memoryRoutingTableWriteIndication(Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl &secCtrl, uint8_t number, uint16_t memoryAddress, uint8_t *data)
 {
 }
-// 
-
 
 void BusAccessUnit::memoryExtReadLocalConfirm(AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl &secCtrl, uint8_t number, uint32_t memoryAddress, bool status)
 {

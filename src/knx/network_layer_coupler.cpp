@@ -108,9 +108,6 @@ bool NetworkLayerCoupler::isRoutedIndividualAddress(uint16_t individualAddress, 
     uint16_t ownAA = _deviceObj.individualAddress() & 0xF000;  // Own area address
     uint16_t ZS = individualAddress & 0xFF00;                        // destination subnetwork address (area + line)
     uint16_t Z = individualAddress & 0xF000;                         // destination area address
-    uint16_t D = individualAddress & 0x00FF;                         // destination device address (without subnetwork part)
-    uint16_t SD = individualAddress & 0x0FFF;                        // destination device address (with line part, but without area part)
-
 
 
     if (_couplerType == LineCoupler)
@@ -207,7 +204,7 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
     
     
 
-    if(addrType == AddressType::GroupAddress && destination != 0)
+    if(addrType == AddressType::GroupAddress && destination != 0) // destination == 0 means broadcast and must not be filtered with the GroupAddresses
     {
         if(destination < 0x7000) // Main group 0-13
         {

@@ -129,12 +129,10 @@ class ApplicationLayer
                            uint16_t memoryAddress);
     void memoryReadResponse(AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl& secCtrl, uint8_t number,
                             uint16_t memoryAddress, uint8_t* data);
-    // Added EC
     void memoryRouterReadResponse(AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl& secCtrl, uint8_t number,
                             uint16_t memoryAddress, uint8_t* data);
     void memoryRoutingTableReadResponse(AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl& secCtrl, uint8_t number,
                             uint16_t memoryAddress, uint8_t* data);
-    //
     void memoryExtReadResponse(AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl& secCtrl, ReturnCodes code, uint8_t number,
                             uint32_t memoryAddress, uint8_t* data);
     void memoryExtWriteResponse(AckType ack, Priority priority, HopCountType hopType, uint16_t asap, const SecurityControl& secCtrl, ReturnCodes code, uint8_t number,

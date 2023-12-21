@@ -7,7 +7,7 @@
 #include "data_property.h"
 #include "callback_property.h"
 #include "function_property.h"
-#include "log_knx.h"
+
 
 // Filter Table Realization Type 3
 // The Filter Table Realisation Type 3 shall be organised as a memory mapped bit-field of
